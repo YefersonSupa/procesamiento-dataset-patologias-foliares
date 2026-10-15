@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diapositivas de Exposición: Preprocesamiento de Dataset de Imágenes - UNSAAC</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+          });"></script>
+
+  <style>
+    :root {
+      --bg-dark: #080c14;
+      --bg-card: rgba(18, 25, 43, 0.85);
+      --bg-card-border: rgba(56, 189, 248, 0.2);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.35);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.3);
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --indigo: #818cf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #030712;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Presentation Wrapper */
+    .deck-container {
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Fixed Top Control Bar */
+    .top-controls {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--primary);
+      min-width: 65px;
+      text-align: center;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary);
+      color: #080c14;
+      border-color: var(--primary);
+      transform: scale(1.08);
+    }
+
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .pill-btn.active {
+      background: var(--emerald);
+      color: #052e16;
+      border-color: var(--emerald);
+    }
+
+    /* Single Slide Styles */
+    .slide {
+      width: 1280px;
+      height: 720px;
+      max-width: 95vw;
+      max-height: calc(95vw * 9 / 16);
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(145deg, #0b1120 0%, #060913 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.06);
+      padding: 45px 55px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    /* Ambient Glow Behind Slides */
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      right: -120px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      border-radius: 50%;
+    }
+
+    .slide::after {
+      content: '';
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      border-radius: 50%;
+    }
+
+    /* Header & Footer */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .slide-category {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slide-category::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    .slide-univ-badge {
+      font-family: var(--font-heading);
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+    }
+
+    .slide-title-area {
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+
+    .slide-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    .slide-body {
+      flex: 1;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 12px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #64748b;
+      position: relative;
+      z-index: 10;
+    }
+
+    .team-credits {
+      display: flex;
+      gap: 16px;
+    }
+
+    .team-credits span {
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 14px;
+      padding: 22px;
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .card-text {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+
+    .card-stat {
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--emerald);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .card-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Flow Stepper for Pipeline */
+    .pipeline-flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+
+    .step-card {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px 14px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      display: inline-block;
+      margin-bottom: 8px;
+      align-self: flex-start;
+    }
+
+    .step-title {
+      font-family: var(--font-heading);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+
+    .step-math {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--emerald);
+      margin-top: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+
+    /* Math Box */
+    .math-callout {
+      background: rgba(30, 41, 59, 0.6);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 20px;
+      margin: 12px 0;
+      font-size: 15px;
+    }
+
+    /* Speaker Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      max-width: 90vw;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 14px;
+      padding: 16px 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      display: none;
+      backdrop-filter: blur(12px);
+    }
+
+    .notes-drawer.open {
+      display: block;
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .notes-content {
+      font-size: 13.5px;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    /* Cover Slide Specific */
+    .cover-slide {
+      text-align: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .cover-header {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .cover-main-title {
+      font-family: var(--font-heading);
+      font-size: 38px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #ffffff 40%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--emerald);
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    .cover-meta {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .cover-meta-col {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px 22px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .cover-meta-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-val {
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.4;
+    }
+
+    /* Image comparisons inside slide */
+    .slide-img-box {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .slide-img-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* ========================================================= */
+    /* PRINT MEDIA RULES (FOR PIXEL-PERFECT 16:9 PDF EXPORT)      */
+    /* ========================================================= */
+    @page {
+      size: 16in 9in landscape;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background: #080c14 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .top-controls, .notes-drawer {
+        display: none !important;
+      }
+
+      .deck-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        width: 16in !important;
+        min-height: auto !important;
+      }
+
+      .slide {
+        display: flex !important;
+        width: 16in !important;
+        height: 9in !important;
+        max-width: 16in !important;
+        max-height: 9in !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        padding: 0.7in 0.9in !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Navigation Controls -->
+  <div class="top-controls">
+    <button class="nav-btn" onclick="prevSlide()" title="Diapositiva anterior (Flecha Izq)">◀</button>
+    <div class="slide-counter" id="slideIndicator">01 / 12</div>
+    <button class="nav-btn" onclick="nextSlide()" title="Siguiente diapositiva (Flecha Der)">▶</button>
+    <button class="pill-btn" id="btnNotes" onclick="toggleNotes()" title="Mostrar notas para el expositor (Tecla S)">
+      🗣️ Notas del Orador
+    </button>
+    <button class="pill-btn" onclick="window.print()" title="Imprimir / Exportar a PDF">
+      📄 Guardar PDF
+    </button>
+  </div>
+
+  <div class="deck-container">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 1: PORTADA                           -->
+    <!-- ========================================== -->
+    <div class="slide cover-slide active" id="slide-1" data-notes="Saludo institucional: Buenas tardes docente Hans Ccacyahuillca y compañeros. Presentamos la Primera Entrega del proyecto de Visión Computacional: Preprocesamiento de Dataset de Imágenes Foliares en el Cultivo de Papa, desarrollado por Yeferson Supa y Edu Piero Villavicencio.">
+      <div class="cover-header">
+        UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO • EPIIS
+      </div>
+      <div>
+        <div class="cover-main-title">
+          PREPROCESAMIENTO DE DATASET DE IMÁGENES
+        </div>
+        <div class="cover-subtitle">
+          Detección y Clasificación Temprana de Patologías Foliares en Papa (<i>Solanum tuberosum</i>) mediante Visión Artificial
+        </div>
+      </div>
+
+      <div class="cover-meta">
+        <div class="cover-meta-col">
+          <div class="cover-meta-label">Asignatura & Semestre</div>
+          <div class="cover-meta-val">Visión Computacional (IF657BIN)<br>Semestre 2026-2</div>
+        </div>
+        <div class="cover-meta-col">
+          <div class="cover-meta-label">Docente Responsable</div>
+          <div class="cover-meta-val">CCACYAHUILLCA BEJAR, HANS HARLEY</div>
+        </div>
+        <div class="cover-meta-col">
+          <div class="cover-meta-label">Expositores / Desarrolladores</div>
+          <div class="cover-meta-val">
+            • SUPA CUSIPAUCAR, Yeferson (220553)<br>
+            • VILLAVICENCIO SEGUIL, Edu Piero (220555)
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: #64748b; font-weight: 500;">
+        Cusco - Perú • Octubre 2026
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 2: CONTEXTO REGIONAL                 -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-2" data-notes="Enfatizar la relevancia regional: La papa es el sustento económico del Cusco y la sierra peruana. El problema fitosanitario principal radica en dos enfermedades criptogámicas que atacan el follaje: Tizón Temprano y Tizón Tardío. Nuestro objetivo con visión computacional es el diagnóstico oportuno antes de la necrosis total.">
+      <div class="slide-header">
+        <div class="slide-category">1. Contexto & Problemática Regional</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Patologías Foliares Críticas en el Cultivo de Papa</h2>
+        <div class="slide-subtitle">Impacto fitosanitario y económico en la agricultura altoandina del Cusco</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card" style="border-top: 3px solid #f59e0b;">
+            <div>
+              <div class="card-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.15);">🍂</div>
+              <div class="card-title">Tizón Temprano (Early Blight)</div>
+              <div class="card-text">
+                • Agente: Hongo <i>Alternaria solani</i>.<br>
+                • Patrón visual: Manchas circulares u ovales con <strong>anillos concéntricos distintivos (diana)</strong>.<br>
+                • Reduce progresivamente el área fotosintética de las hojas inferiores.
+              </div>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: #f59e0b; font-weight: 600;">Patología Foliar 01</div>
+          </div>
+
+          <div class="card" style="border-top: 3px solid #ef4444;">
+            <div>
+              <div class="card-icon" style="color: #ef4444; background: rgba(239, 68, 68, 0.15);">🥀</div>
+              <div class="card-title">Tizón Tardío (Late Blight)</div>
+              <div class="card-text">
+                • Agente: Oomiceto <i>Phytophthora infestans</i>.<br>
+                • Patrón visual: <strong>Lesiones acuosas oscuras</strong> y necrosamiento acelerado bajo humedad alta.<br>
+                • Históricamente causante de la Gran Hambruna Irlandesa; destruye parcelas en días.
+              </div>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: #ef4444; font-weight: 600;">Patología Foliar 02</div>
+          </div>
+
+          <div class="card" style="border-top: 3px solid #10b981;">
+            <div>
+              <div class="card-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.15);">🌱</div>
+              <div class="card-title">Follaje Sano (Healthy)</div>
+              <div class="card-text">
+                • Hojas libres de necrosis foliar.<br>
+                • Presenta variabilidad fenotípica natural: nervaduras prominentes, cutícula cerosa y tonalidades clorofílicas diversas.<br>
+                • Clase de referencia para el modelo clasificador.
+              </div>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: #10b981; font-weight: 600;">Línea Base de Control</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 2 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 3: DATASET DESAFIANTE                -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-3" data-notes="Punto clave para convencer al jurado: Explicar por qué este dataset no es un problema trivial de juguete. Las fotos fueron tomadas in-the-wild: sol variable, sombras duras, reflejos cerosos, tierra y superposición foliar. Además, en etapas tempranas las lesiones de Alternaria y Phytophthora se parecen mucho cromáticamente.">
+      <div class="slide-header">
+        <div class="slide-category">2. Selección del Dataset</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">¿Por qué es un Dataset Altamente Desafiante?</h2>
+        <div class="slide-subtitle">Superando las limitaciones de laboratorio con imágenes reales en campo abierto (In-The-Wild)</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" style="color: var(--primary);">Retos Fotométricos y Ambientales</div>
+            <div class="card-text">
+              <p>• <strong>Iluminación solar cenital no homogénea:</strong> Zonas saturadas por sol directo conviven con sombras proyectadas por hojas superiores.</p>
+              <p>• <strong>Reflejos especulares:</strong> La cutícula cerosa de la hoja genera puntos ciegos de alto brillo.</p>
+              <p>• <strong>Fondos no homogéneos:</strong> Tierra, rastrojos, tallos y superposición anatómica foliar complican la segmentación ingenua.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="color: var(--emerald);">Retos de Reconocimiento Visual</div>
+            <div class="card-text">
+              <p>• <strong>Alta Similitud Inter-Clase Temprana:</strong> En fases prematuras, las micro-pústulas de <i>Alternaria</i> y <i>Phytophthora</i> son manchas pardas milimétricas indistinguibles sin realce de contraste.</p>
+              <p>• <strong>Desbalance de escala y perspectiva:</strong> Variabilidad en ángulo cenital y distancia focal de la cámara móvil.</p>
+              <p>• <strong>Ruido de sensor:</strong> Gránulo fotométrico en tomas con baja o excesiva luz ambiental.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 3 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 4: ARQUITECTURA DEL PIPELINE         -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-4" data-notes="Mostrar la visión panorámica: Diseñamos un pipeline de 5 fases consecutivas y modulares en Python: Auditoría de desenfoque, Filtro bilateral preservador de bordes, CLAHE en el canal de luminancia CIE-Lab, Letterboxing para respetar la forma foliar, y Particionado 70-15-15 con Augmentation solo en Train.">
+      <div class="slide-header">
+        <div class="slide-category">3. Arquitectura Algorítmica</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Pipeline Secuencial de Preprocesamiento</h2>
+        <div class="slide-subtitle">Estructura modular orientada a maximizar la señal patológica foliar</div>
+      </div>
+      <div class="slide-body">
+        <div class="pipeline-flow">
+          <div class="step-card" style="border-top: 3px solid #38bdf8;">
+            <div>
+              <div class="step-badge">Paso 01</div>
+              <div class="step-title">Auditoría de Calidad</div>
+              <div class="step-desc">Operador Laplaciano bidimensional para cuantificar nitidez y descartar desenfoque.</div>
+            </div>
+            <div class="step-math">Var(∇² I) ≥ 80.0</div>
+          </div>
+
+          <div class="step-card" style="border-top: 3px solid #10b981;">
+            <div>
+              <div class="step-badge">Paso 02</div>
+              <div class="step-title">Filtrado Bilateral</div>
+              <div class="step-desc">Denoising no lineal que atenúa ruido fotográfico sin difuminar bordes de manchas.</div>
+            </div>
+            <div class="step-math">d=9, σ_c=75, σ_s=75</div>
+          </div>
+
+          <div class="step-card" style="border-top: 3px solid #f59e0b;">
+            <div>
+              <div class="step-badge">Paso 03</div>
+              <div class="step-title">CLAHE en CIE-Lab</div>
+              <div class="step-desc">Realce adaptativo de contraste local sobre canal L* preservando color clorofílico.</div>
+            </div>
+            <div class="step-math">clip=2.5, grid=8x8</div>
+          </div>
+
+          <div class="step-card" style="border-top: 3px solid #a855f7;">
+            <div>
+              <div class="step-badge">Paso 04</div>
+              <div class="step-title">Letterboxing</div>
+              <div class="step-desc">Redimensionamiento isotrópico a 256×256 con relleno simétrico; cero distorsión de forma.</div>
+            </div>
+            <div class="step-math">Aspect Ratio 1:1</div>
+          </div>
+
+          <div class="step-card" style="border-top: 3px solid #ec4899;">
+            <div>
+              <div class="step-badge">Paso 05</div>
+              <div class="step-title">Partición & Augment</div>
+              <div class="step-desc">Separación estratificada 70-15-15 con data augmentation restringido a Train.</div>
+            </div>
+            <div class="step-math">Train (Aug) / Val / Test</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 4 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 5: PASO 1 - AUDITORÍA LAPLACIANO     -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-5" data-notes="Explicar matemáticamente el paso 1: ¿Cómo sabe el algoritmo si una foto está desenfocada? Calculamos la segunda derivada espacial con el Laplaciano. Las fotos nítidas tienen cambios bruscos de intensidad (bordes marcados) y alta varianza. Si la varianza cae por debajo de 80.0, la foto se marca como desenfocada.">
+      <div class="slide-header">
+        <div class="slide-category">4. Fundamentación Técnica • Paso 1</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Auditoría de Calidad y Filtro de Desenfoque</h2>
+        <div class="slide-subtitle">Detección analítica de altas frecuencias mediante el Operador Laplaciano</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Fundamentación Matemática</div>
+            <div class="card-text">
+              <p>El Laplaciano mide la divergencia del gradiente de intensidad, respondiendo a bordes y transiciones rápidas:</p>
+              <div class="math-callout">
+                $$\nabla^2 I = \frac{\partial^2 I}{\partial x^2} + \frac{\partial^2 I}{\partial y^2}, \quad K = \begin{bmatrix} 0 & 1 & 0 \\ 1 & -4 & 1 \\ 0 & 1 & 0 \end{bmatrix}$$
+              </div>
+              <p>Métrica de decisión: <strong>Varianza muestral de la respuesta laplaciana</strong>:</p>
+              <div class="math-callout" style="border-left-color: var(--emerald);">
+                $$\sigma^2(\nabla^2 I) = \frac{1}{MN} \sum_{x,y} (\nabla^2 I(x,y) - \mu)^2$$
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Criterio Operativo en Pipeline</div>
+            <div class="card-text">
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <span style="color: var(--emerald); font-weight: 700;">✓ Imagen Nítida:</span> $\sigma^2 \ge 80.0$<br>
+                Bordes bien delimitados, conserva micro-texturas foliares.
+              </div>
+              <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px;">
+                <span style="color: #ef4444; font-weight: 700;">✗ Imagen Borrosa / Degradada:</span> $\sigma^2 < 80.0$<br>
+                Desenfoque óptico o de movimiento manual; se etiqueta para exclusión.
+              </div>
+              <p style="margin-top: 14px; font-size: 13px; color: #94a3b8;">
+                Garantiza que la red neuronal no aprenda artefactos producidos por vibración del operario en campo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 5 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 6: PASO 2 - FILTRO BILATERAL         -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-6" data-notes="Comparativa clave que el docente siempre pregunta: ¿Por qué no un filtro Gaussiano común? Porque el filtro Gaussiano promedia todo y borra los bordes de las manchas. El filtro Bilateral calcula dos pesos: distancia espacial y diferencia de color. Si dos píxeles tienen colores muy distintos (como el borde de una mancha necrótica), no los promedia.">
+      <div class="slide-header">
+        <div class="slide-category">4. Fundamentación Técnica • Paso 2</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Filtrado Bilateral vs. Filtro Gaussiano</h2>
+        <div class="slide-subtitle">Atenuación de ruido con estricta preservación de los bordes lesionales</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Mecánica del Filtro Bilateral</div>
+            <div class="card-text">
+              <p>Pondera los píxeles vecinos combinando dos campanas Gaussianas simultáneas:</p>
+              <div class="math-callout">
+                $$I^{\text{filt}}(p) = \frac{1}{W_p} \sum_{q} I(q) \cdot \underbrace{G_{\sigma_s}(\|p-q\|)}_{\text{Distancia espacial}} \cdot \underbrace{G_{\sigma_r}(|I(p)-I(q)|)}_{\text{Similitud radiométrica}}$$
+              </div>
+              <p>• Si $|I(p) - I(q)|$ es grande (borde de la lesión necrótica), el peso fotométrico cae a 0 $\rightarrow$ <strong>¡El borde no se difumina!</strong></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Comparativa de Rendimiento</div>
+            <div class="card-text">
+              <div style="margin-bottom: 12px;">
+                <strong style="color: #ef4444;">Filtro Gaussiano Estándar:</strong><br>
+                Suaviza el ruido pero difumina indiscriminadamente los anillos concéntricos de <i>Alternaria</i>, destruyendo la característica diagnóstica.
+              </div>
+              <div style="margin-bottom: 12px;">
+                <strong style="color: var(--emerald);">Filtro Bilateral Aplicado:</strong><br>
+                Parámetros óptimos ($d=9, \sigma_c=75.0, \sigma_s=75.0$): Elimina el grano fotográfico en la lámina foliar y mantiene intacta la agudeza del contorno necrosado.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 6 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 7: PASO 3 - CLAHE EN CIE-LAB         -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-7" data-notes="Justificación del espacio de color: Si ecualizamos en RGB, cambiamos los colores de la hoja y la clorofila se ve artificial. Al pasar al espacio CIE-Lab, la luminosidad L está completamente separada de los colores a y b. Aplicamos CLAHE solo en L con límite de contraste 2.5, resaltando las texturas sin alterar la naturaleza del color foliar.">
+      <div class="slide-header">
+        <div class="slide-category">4. Fundamentación Técnica • Paso 3</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Realce CLAHE en el Espacio Perceptual CIE-Lab</h2>
+        <div class="slide-subtitle">Desacoplamiento ortogonal de luminancia para proteger la firma cromática foliar</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">¿Por qué en CIE-Lab y no en RGB?</div>
+            <div class="card-text">
+              <p>• En <strong>RGB</strong>, los canales de color están íntimamente acoplados a la luz. Modificar contrastes en RGB falsea la tonalidad verde natural de la clorofila.</p>
+              <p>• En <strong>CIE-Lab</strong>, se desacoplan de forma ortogonal:</p>
+              <div style="background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 13px; margin: 8px 0;">
+                <span style="color: var(--primary);">L*:</span> Luminancia perceptual (0 a 100)<br>
+                <span style="color: var(--emerald);">a*:</span> Eje cromático Verde ↔ Rojo<br>
+                <span style="color: var(--amber);">b*:</span> Eje cromático Azul ↔ Amarillo
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Ecualización Adaptativa Local (CLAHE)</div>
+            <div class="card-text">
+              <p>• <strong>Teselas Contextuales ($8 \times 8$):</strong> El histograma se calcula localmente en cada cuadrícula, realzando micro-detalles en sombras.</p>
+              <p>• <strong>Límite de Recorte (Clip Limit = 2.5):</strong> Picos de gradiente excesivos se recortan y redistribuyen de manera uniforme, evitando la amplificación de ruido de fondo.</p>
+              <p style="margin-top: 10px; color: var(--emerald); font-weight: 600;">
+                Resultado: Micro-lesiones necróticas resaltadas nítidamente sin distorsionar el color de la hoja sana.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 7 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 8: PASO 4 - LETTERBOXING             -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-8" data-notes="Estandarización espacial: Las redes convolucionales exigen imágenes cuadradas como 256x256. Si hacemos un resize normal, deformamos las hojas aplastándolas o estirándolas, cambiando la redondez de las manchas. Con Letterbox calculamos el factor de escala mínimo y rellenamos los bordes con negro, manteniendo la anatomía original intacta.">
+      <div class="slide-header">
+        <div class="slide-category">4. Fundamentación Técnica • Paso 4</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Estandarización Espacial con Letterboxing</h2>
+        <div class="slide-subtitle">Respeto estricto del Aspect Ratio foliar frente al reescalado convencional</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" style="color: #ef4444;">El Peligro del Resize Directo Anisotrópico</div>
+            <div class="card-text">
+              <p>Al aplicar <code>cv2.resize(img, (256, 256))</code> directamente:</p>
+              <p>• Se comprime o estira la lámina foliar artificialmente.</p>
+              <p>• Altera la <strong>excentricidad y circularidad</strong> de las lesiones concéntricas de <i>Alternaria</i>, engañando a las características morfológicas.</p>
+              <p>• Induce sesgos morfológicos artificiales en la red convolucional.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="color: var(--emerald);">Nuestra Solución: Letterboxing Isotrópico</div>
+            <div class="card-text">
+              <p>Calcula la escala uniforme conservando el ratio de aspecto $W/H$:</p>
+              <div class="math-callout">
+                $$s = \min\left(\frac{256}{W_{\text{orig}}}, \frac{256}{H_{\text{orig}}}\right)$$
+              </div>
+              <p>Centra la imagen reescalada en un lienzo cuadrado $256 \times 256$ con relleno simétrico simétrico ($\Delta x, \Delta y$).</p>
+              <p style="margin-top: 8px; color: var(--primary); font-weight: 600;">✓ Conserva 100% de la morfología anatómica de la planta.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 8 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 9: PARTICIONADO & AUGMENTATION       -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-9" data-notes="Muestreo riguroso sin data leakage: Dividimos el dataset de forma estratificada en 70% entrenamiento, 15% validación y 15% prueba. Punto crítico: Aplicamos Data Augmentation (rotaciones de +-15 grados, volteo horizontal y ajustes leves de brillo) exclusivamente en Train. Validación y Test jamás se aumentan para que reflejen la realidad sin sesgos optimistas.">
+      <div class="slide-header">
+        <div class="slide-category">4. Fundamentación Técnica • Paso 5</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Particionado Estratificado y Data Augmentation</h2>
+        <div class="slide-subtitle">Prevención de sobreajuste y garantía de evaluación empírica no sesgada</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card" style="border-top: 3px solid var(--emerald);">
+            <div class="card-stat">70%</div>
+            <div class="card-stat-label">Conjunto de Entrenamiento (Train)</div>
+            <div class="card-text" style="margin-top: 10px;">
+              • Único conjunto con <strong>Data Augmentation</strong>.<br>
+              • Volteo horizontal (p=0.5).<br>
+              • Rotación leve ($\pm 15^\circ$).<br>
+              • Micro-ajustes de brillo y contraste.<br>
+              • Pasa de 21 muestras base a 42 muestras enriquecidas.
+            </div>
+          </div>
+
+          <div class="card" style="border-top: 3px solid var(--primary);">
+            <div class="card-stat">15%</div>
+            <div class="card-stat-label">Conjunto de Validación (Val)</div>
+            <div class="card-text" style="margin-top: 10px;">
+              • <strong>Cero augmentación sintética.</strong><br>
+              • Ajuste de hiperparámetros en tiempo de entrenamiento.<br>
+              • Refleja estrictamente la variabilidad real en campo abierto.
+            </div>
+          </div>
+
+          <div class="card" style="border-top: 3px solid var(--indigo);">
+            <div class="card-stat">15%</div>
+            <div class="card-stat-label">Conjunto de Prueba Final (Test)</div>
+            <div class="card-text" style="margin-top: 10px;">
+              • <strong>Imágenes vírgenes no manipuladas.</strong><br>
+              • Evaluación final del modelo ciego.<br>
+              • Evita fuga de datos (<i>data leakage</i>) garantizando métricas verídicas.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 9 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 10: RESULTADOS VISUALES & EDA        -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-10" data-notes="Mostrar las figuras empíricas: Aquí vemos los resultados directos de nuestro código en ejecución. A la izquierda, la transformación de una muestra de Tizón Temprano: original, bilateral, CLAHE en Lab, Letterbox y Augmentation. A la derecha, nuestro reporte EDA con el balance perfecto de clases y la distribución de nitidez superando el umbral.">
+      <div class="slide-header">
+        <div class="slide-category">5. Resultados Experimentales</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Evidencia Experimental del Pipeline</h2>
+        <div class="slide-subtitle">Transformación visual por etapas y reporte del Análisis Exploratorio de Datos (EDA)</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2" style="height: 380px;">
+          <div class="card" style="padding: 12px; display: flex; flex-direction: column;">
+            <div class="card-title" style="font-size: 14px; margin-bottom: 6px;">Transformación Visual del Pipeline</div>
+            <div class="slide-img-box">
+              <img src="pipeline_comparativa.png" alt="Pipeline Comparativo">
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px; text-align: center;">
+              Paso 1: Raw $\rightarrow$ Paso 2: Bilateral $\rightarrow$ Paso 3: CLAHE Lab $\rightarrow$ Paso 4: Letterbox $\rightarrow$ Paso 5: Augment
+            </div>
+          </div>
+
+          <div class="card" style="padding: 12px; display: flex; flex-direction: column;">
+            <div class="card-title" style="font-size: 14px; margin-bottom: 6px;">Reporte Diagnóstico EDA (analisis_eda.py)</div>
+            <div class="slide-img-box">
+              <img src="eda_report.png" alt="Reporte EDA">
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px; text-align: center;">
+              Distribución balanceada por clase e histograma de nitidez laplaciana (> 80.0)
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 10 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 11: PREGUNTAS TÍPICAS DEL DOCENTE    -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-11" data-notes="Diapositiva de respaldo para la ronda de preguntas: Si el docente nos consulta por qué CLAHE y no ecualización global, o por qué no aumentamos test, aquí tenemos las respuestas sintéticas y contundentes listas para exponer.">
+      <div class="slide-header">
+        <div class="slide-category">6. Defensa Oral & Preguntas Clave</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Respuestas Metodológicas para la Sustentación</h2>
+        <div class="slide-subtitle">Argumentación técnica ante las interrogantes frecuentes de la cátedra</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title" style="color: var(--primary); font-size: 15px;">¿Por qué no ecualización global estándar?</div>
+            <div class="card-text">
+              La ecualización global asume una distribución uniforme acumulada en toda la escena. En fotos a cielo abierto, satura las zonas claras del fondo y magnifica drásticamente el ruido en áreas lisas. CLAHE limita la amplificación de contraste en bloques locales de $8 \times 8$.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="color: var(--emerald); font-size: 15px;">¿Por qué Data Augmentation solo en Train?</div>
+            <div class="card-text">
+              Validación y Prueba deben medir el desempeño frente a la realidad pura sin manipular. Aumentar Val/Test generaría sesgo optimista y posible fuga de información (<i>data leakage</i>) que invalidaría la rigurosidad científica del experimento.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="color: var(--amber); font-size: 15px;">¿Por qué usar el espacio CIE-Lab?</div>
+            <div class="card-text">
+              El espacio CIE-Lab es perceptualmente uniforme y desacopla la luminancia ($L^*$) de los componentes cromáticos ($a^*, b^*$). Nos permite intensificar las lesiones necróticas sin alterar el matiz natural de la clorofila vegetal.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 11 de 12</div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 12: CONCLUSIONES & SIGUIENTE ENTREGA -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-12" data-notes="Cierre de la exposición: Agradecer la atención del docente y compañeros. Resumir que cumplimos todos los requisitos de la Primera Entrega con un pipeline reproducible, y anticipar la Segunda Entrega donde extraeremos descriptores morfológicos y entrenaremos modelos convolucionales livianos para campo.">
+      <div class="slide-header">
+        <div class="slide-category">7. Conclusiones & Trabajo Futuro</div>
+        <div class="slide-univ-badge">UNSAAC • VISIÓN COMPUTACIONAL</div>
+      </div>
+      <div class="slide-title-area">
+        <h2 class="slide-title">Conclusiones y Rumbo a la Segunda Entrega</h2>
+        <div class="slide-subtitle">Bases sólidas para la extracción de características y modelado profundo</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card" style="border-left: 4px solid var(--emerald);">
+            <div class="card-title" style="color: var(--emerald);">Logros de la Primera Entrega</div>
+            <div class="card-text">
+              <p>✓ <strong>Pipeline Modular y Automatizado:</strong> Código Python limpio y desacoplado (<code>preprocesamiento.py</code>, <code>pipeline.py</code>, <code>analisis_eda.py</code>).</p>
+              <p>✓ <strong>Preservación Morfológica Estricta:</strong> Letterbox isotrópico a 256×256 y filtrado bilateral sin alteración anatómica foliar.</p>
+              <p>✓ <strong>Dataset Balanceado y Auditado:</strong> Particionado 70-15-15 con control riguroso de nitidez laplaciana.</p>
+            </div>
+          </div>
+
+          <div class="card" style="border-left: 4px solid var(--primary);">
+            <div class="card-title" style="color: var(--primary);">Plan para la Segunda Entrega</div>
+            <div class="card-text">
+              <p>• <strong>Extracción de Descriptores Clásicos:</strong> Matrices de Coocurrencia de Niveles de Gris (GLCM), descriptores de Haralick y Momentos Invariantes de Hu.</p>
+              <p>• <strong>Modelado Profundo Convolucional:</strong> Transfer Learning con MobileNetV3 y ResNet18 buscando equilibrio entre precisión diagnóstica y bajo consumo computacional para dispositivos móviles en el campo cusqueño.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; font-size: 18px; font-weight: 700; color: #ffffff;">
+          ¡Muchas gracias por su atención!
+        </div>
+      </div>
+      <div class="slide-footer">
+        <div class="team-credits">Desarrollado por: <span>Y. Supa</span> & <span>E. Piero Villavicencio</span></div>
+        <div>Diapositiva 12 de 12 • Fin de la Presentación</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Speaker Notes Drawer -->
+  <div class="notes-drawer" id="notesDrawer">
+    <div class="notes-header">
+      <span>Guía del Expositor (Notas de Voz)</span>
+      <span style="cursor: pointer; color: #94a3b8;" onclick="toggleNotes()">✕ Cerrar</span>
+    </div>
+    <div class="notes-content" id="notesText">
+      Cargando notas...
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function showSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+      const activeSlide = document.getElementById(`slide-${currentSlide}`);
+      if (activeSlide) {
+        activeSlide.classList.add('active');
+        const notes = activeSlide.getAttribute('data-notes') || 'Sin notas específicas para esta diapositiva.';
+        document.getElementById('notesText').innerText = notes;
+      }
+
+      const counter = currentSlide < 10 ? `0${currentSlide}` : `${currentSlide}`;
+      const total = totalSlides < 10 ? `0${totalSlides}` : `${totalSlides}`;
+      document.getElementById('slideIndicator').innerText = `${counter} / ${total}`;
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function toggleNotes() {
+      const drawer = document.getElementById('notesDrawer');
+      const btn = document.getElementById('btnNotes');
+      drawer.classList.toggle('open');
+      btn.classList.toggle('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'n' || e.key === 'N') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'p' || e.key === 'P') {
+        prevSlide();
+      } else if (e.key === 's' || e.key === 'S') {
+        toggleNotes();
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    // Initialize first slide notes
+    showSlide(1);
+  </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "clases": [
+    "Early_Blight",
+    "Healthy",
+    "Late_Blight"
+  ],
+  "conteo_total_inicial": 30,
+  "conteo_total_procesado": 51,
+  "distribucion_splits": {
+    "train": 42,
+    "val": 3,
+    "test": 6
+  },
+  "detalles_por_clase": {
+    "Early_Blight": {
+      "total_raw": 10,
+      "train": 7,
+      "val": 1,
+      "test": 2
+    },
+    "Healthy": {
+      "total_raw": 10,
+      "train": 7,
+      "val": 1,
+      "test": 2
+    },
+    "Late_Blight": {
+      "total_raw": 10,
+      "train": 7,
+      "val": 1,
+      "test": 2
+    }
+  }
+}

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "procesamiento-dataset-patologias-foliares"
+version = "1.0.0"
+description = "Pipeline de preprocesamiento y auditoría de calidad para dataset de patologías foliares en cultivo de papa mediante visión artificial"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Yeferson Supa Cusipaucar", email = "220553@unsaac.edu.pe"}
+]
+keywords = [
+    "computer-vision",
+    "image-processing",
+    "clahe",
+    "bilateral-filter",
+    "letterbox-resize",
+    "plant-pathology",
+    "potato-diseases",
+    "unsaac"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
+    "scikit-image>=0.21.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "jupyter>=1.0.0",
+    "nbformat>=5.9.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

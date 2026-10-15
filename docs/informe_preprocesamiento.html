@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informe: Preprocesamiento de Dataset de Imágenes - UNSAAC</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+          });"></script>
+
+  <style>
+    :root {
+      --primary: #0f2b5c;
+      --primary-light: #1e3a8a;
+      --accent: #059669;
+      --accent-subtle: #ecfdf5;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Floating Action Bar */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .action-bar-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 9999px;
+      background-color: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .btn-print {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .btn-print:hover {
+      background: linear-gradient(135deg, #047857, #065f46);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+    }
+
+    /* Main Container */
+    .doc-container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 60px 70px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Portada Institucional */
+    .title-page {
+      text-align: center;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 40px;
+      margin-bottom: 45px;
+    }
+
+    .title-page h1 {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .title-page h2 {
+      font-family: var(--font-heading);
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    .title-page h3 {
+      font-family: var(--font-heading);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .logo-container {
+      margin: 28px 0;
+    }
+
+    .logo-container img {
+      width: 170px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .work-meta {
+      margin: 24px 0 32px 0;
+    }
+
+    .work-subject {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .work-title {
+      font-family: var(--font-heading);
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    .work-desc {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: #2563eb;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    .team-box {
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 18px 24px;
+      margin: 30px 0 20px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .team-group h4 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .team-group p {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+
+    .title-footer {
+      margin-top: 25px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Content Styling */
+    h2.section-title {
+      font-family: var(--font-heading);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 36px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h3.sub-title {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 24px 0 10px 0;
+    }
+
+    p {
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Math formula boxes */
+    .formula-card {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--primary-light);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 18px 0;
+      overflow-x: auto;
+    }
+
+    .formula-caption {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 22px 0;
+      font-size: 13.5px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--primary);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      text-align: left;
+      padding: 10px 14px;
+      border-top: 2px solid #cbd5e1;
+      border-bottom: 1.5px solid #cbd5e1;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:nth-child(even) td {
+      background-color: #fcfdfe;
+    }
+
+    tr.highlight-row td {
+      background-color: #f0fdf4;
+      font-weight: 700;
+      border-top: 1.5px solid #cbd5e1;
+      border-bottom: 2px solid #cbd5e1;
+    }
+
+    /* Images and Figures */
+    .figure-box {
+      margin: 26px 0;
+      text-align: center;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .figure-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    .figure-caption {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    /* Callout & QA boxes */
+    .qa-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-left: 4px solid #0284c7;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+
+    .qa-question {
+      font-weight: 700;
+      color: #0369a1;
+      margin-bottom: 6px;
+      font-size: 14.5px;
+    }
+
+    .qa-answer {
+      color: #0f172a;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    /* Print styles */
+    @media print {
+      @page {
+        size: A4;
+        margin: 1.8cm 1.5cm;
+      }
+
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 11pt;
+        line-height: 1.5;
+      }
+
+      .action-bar {
+        display: none !important;
+      }
+
+      .doc-container {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+      }
+
+      .title-page {
+        page-break-after: always;
+        padding-bottom: 0;
+        margin-bottom: 0;
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .formula-card, .qa-box, .figure-box, table {
+        page-break-inside: avoid;
+      }
+
+      h2.section-title {
+        page-break-after: avoid;
+        margin-top: 24pt;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print Bar -->
+  <div class="action-bar">
+    <div class="action-bar-title">
+      <span>UNSAAC • Visión Computacional</span>
+      <span class="badge">Primera Entrega</span>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+        <path d="M6 14h12v8H6z"/>
+      </svg>
+      Imprimir / Guardar como PDF
+    </button>
+  </div>
+
+  <div class="doc-container">
+
+    <!-- PORTADA OFICIAL INSTITUCIONAL UNSAAC -->
+    <div class="title-page">
+      <h1>UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO</h1>
+      <h2>FACULTAD DE INGENIERÍA ELÉCTRICA, ELECTRÓNICA, INFORMÁTICA Y MECÁNICA</h2>
+      <h3>ESCUELA PROFESIONAL DE INGENIERÍA INFORMÁTICA Y DE SISTEMAS</h3>
+
+      <div class="logo-container">
+        <img src="unsaac.jpg" alt="Logo Institucional UNSAAC">
+      </div>
+
+      <div class="work-meta">
+        <div class="work-subject">ASIGNATURA: VISIÓN COMPUTACIONAL (IF657BIN)</div>
+        <div class="work-title">TRABAJO: PRIMERA ENTREGA - PREPROCESAMIENTO DE DATASET DE IMÁGENES</div>
+        <div class="work-desc">PROYECTO SEMESTRAL: Detección y Clasificación Temprana de Patologías Foliares en el Cultivo de Papa (<i>Solanum tuberosum</i>) mediante Visión Artificial</div>
+      </div>
+
+      <div class="team-box">
+        <div class="team-group">
+          <h4>Docente Responsable</h4>
+          <p>CCACYAHUILLCA BEJAR, HANS HARLEY</p>
+        </div>
+        <div class="team-group">
+          <h4>Autores / Desarrolladores</h4>
+          <p>SUPA CUSIPAUCAR, Yeferson • 220553</p>
+          <p>VILLAVICENCIO SEGUIL, Edu Piero • 220555</p>
+        </div>
+      </div>
+
+      <div class="title-footer">
+        Cusco - Perú<br>
+        2026
+      </div>
+    </div>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <h2 class="section-title">Resumen Ejecutivo</h2>
+    <p>
+      El presente informe formaliza el desarrollo técnico, matemático y computacional de la primera entrega correspondiente al preprocesamiento y auditoría de calidad de un dataset de imágenes foliares en el cultivo de papa (<i>Solanum tuberosum</i>). La investigación fitosanitaria regional del Cusco exige soluciones automatizadas capaces de clasificar oportunamente tres estados críticos: Tizón Temprano (<i>Early Blight</i>), Tizón Tardío (<i>Late Blight</i>) y Hojas Sanas (<i>Healthy</i>).
+    </p>
+    <p>
+      Frente a condiciones adversas de captura en campo abierto (<i>in-the-wild</i>), se construyó un pipeline modular en Python/OpenCV que integra: auditoría de desenfoque mediante la varianza del operador Laplaciano, filtrado bilateral no lineal para atenuación de ruido de sensor con estricta conservación de bordes, realce local CLAHE en el espacio perceptual CIE-Lab, redimensionamiento isotrópico mediante letterbox a $256 \times 256$, y particionado estratificado (70% Train, 15% Val, 15% Test) con data augmentation restringido únicamente a entrenamiento. Los resultados garantizan representaciones numéricas no sesgadas e invariantes en escala para el posterior modelado profundo.
+    </p>
+
+    <!-- 1. INTRODUCCIÓN Y CONTEXTO -->
+    <h2 class="section-title">1. Introducción y Contexto Regional</h2>
+    <p>
+      La papa es el cultivo agrícola más trascendente de la región andina del Cusco. La producción se enfrenta anualmente al ataque severo de patógenos criptogámicos de rápida propagación:
+    </p>
+    <ul>
+      <li><strong>Tizón Temprano (<i>Early Blight</i>):</strong> Producido por el hongo <i>Alternaria solani</i>. Comienza con manchas necróticas pardas que forman círculos concéntricos distintivos (anillos en diana).</li>
+      <li><strong>Tizón Tardío (<i>Late Blight</i>):</strong> Ocasionado por el oomiceto <i>Phytophthora infestans</i>. Agente devastador que provoca lesiones acuosas verde oscuras a negras que necrosan el tejido en cuestión de días.</li>
+      <li><strong>Follaje Sano (<i>Healthy</i>):</strong> Hojas sin afectación patológica con variabilidad morfológica y tonal natural.</li>
+    </ul>
+
+    <!-- 2. JUSTIFICACIÓN DEL DATASET -->
+    <h2 class="section-title">2. Justificación del Dataset Desafiante</h2>
+    <p>
+      A diferencia de entornos controlados de laboratorio con iluminación de estudio y fondos planos, este dataset presenta retos reales indispensables para validar sistemas de visión artificial:
+    </p>
+    <ul>
+      <li><strong>Condiciones Fotométricas Extremas:</strong> Variación de luz solar cenital directa, sombras arrojadas y reflejos especulares de la cutícula cerosa de la hoja.</li>
+      <li><strong>Fondos Complejos No Homogéneos:</strong> Suelo agrícola, rastrojos, tallos y superposición intrincada de follaje vegetal.</li>
+      <li><strong>Gran Similitud Inter-Clase Temprana:</strong> En etapas incipientes, las micro-lesiones necróticas de tizón temprano y tardío presentan diámetros milimétricos y tonalidades marrones muy similares antes de que aparezcan anillos concéntricos maduros.</li>
+      <li><strong>Variabilidad de Escala y Perspectiva:</strong> Tomas capturadas a diferentes distancias focales y orientaciones manuales.</li>
+    </ul>
+
+    <!-- 3. FUNDAMENTACIÓN MATEMÁTICA -->
+    <h2 class="section-title">3. Fundamentación Matemática del Pipeline</h2>
+
+    <h3 class="sub-title">3.1. Auditoría de Calidad y Nitidez (Operador Laplaciano)</h3>
+    <p>
+      Para detectar capturas desenfocadas o degradadas por vibración del sensor, se calcula la segunda derivada espacial sobre la imagen en escala de grises:
+    </p>
+    <div class="formula-card">
+      $$\nabla^2 I(x, y) = \frac{\partial^2 I}{\partial x^2} + \frac{\partial^2 I}{\partial y^2} \approx I(x+1, y) + I(x-1, y) + I(x, y+1) + I(x, y-1) - 4I(x, y)$$
+      $$\sigma^2(\nabla^2 I) = \frac{1}{MN} \sum_{x=1}^{M}\sum_{y=1}^{N} \Big(\nabla^2 I(x, y) - \mu_{\nabla^2}\Big)^2$$
+      <div class="formula-caption">Fórmula 1: Varianza del Laplaciano como estimador de altas frecuencias y enfoque. Umbral crítico: $\tau = 80.0$.</div>
+    </div>
+
+    <h3 class="sub-title">3.2. Reducción de Ruido con Filtrado Bilateral</h3>
+    <p>
+      El filtro bilateral combina cercanía espacial y similitud radiométrica para no suavizar los bordes finos de las manchas patológicas:
+    </p>
+    <div class="formula-card">
+      $$I^{\text{filt}}(p) = \frac{1}{W_p} \sum_{q \in \Omega} I(q) \exp\left(-\frac{\|p - q\|^2}{2\sigma_s^2}\right) \exp\left(-\frac{|I(p) - I(q)|^2}{2\sigma_r^2}\right)$$
+      <div class="formula-caption">Fórmula 2: Filtrado bilateral adaptativo ($d=9, \sigma_s=75.0, \sigma_r=75.0$).</div>
+    </div>
+
+    <h3 class="sub-title">3.3. Realce Local CLAHE en Espacio CIE-Lab</h3>
+    <p>
+      Se convierte de RGB al espacio ortogonal CIE-Lab para desacoplar la luminosidad acromática ($L^*$) de los ejes cromáticos ($a^*, b^*$). CLAHE se aplica exclusivamente a $L^*$ con teselas de $8 \times 8$ y límite de contraste (\textit{clip limit}) de $2.5$:
+    </p>
+    <div class="formula-card">
+      $$\begin{cases} 
+      L^* = 116 f(Y/Y_n) - 16 \\ 
+      a^* = 500 [f(X/X_n) - f(Y/Y_n)] \\ 
+      b^* = 200 [f(Y/Y_n) - f(Z/Z_n)] 
+      \end{cases} \quad \text{donde } f(t) = \begin{cases} t^{1/3} & t > \delta^3 \\ \frac{t}{3\delta^2} + \frac{4}{29} & \text{en otro caso} \end{cases}$$
+      <div class="formula-caption">Fórmula 3: Desacoplamiento de luminancia perceptual y preservación estricta de coloración foliar.</div>
+    </div>
+
+    <h3 class="sub-title">3.4. Estandarización Espacial con Letterbox</h3>
+    <p>
+      Para alimentar redes convolucionales sin estirar la morfología foliar, se aplica reescalado isotrópico a $256 \times 256$ con padding simétrico:
+    </p>
+    <div class="formula-card">
+      $$s = \min\left( \frac{256}{W_{\text{orig}}}, \frac{256}{H_{\text{orig}}} \right), \quad \Delta x = \left\lfloor \frac{256 - \lfloor W_{\text{orig}} \cdot s \rfloor}{2} \right\rfloor, \quad \Delta y = \left\lfloor \frac{256 - \lfloor H_{\text{orig}} \cdot s \rfloor}{2} \right\rfloor$$
+      <div class="formula-caption">Fórmula 4: Conservación geométrica estricta de Aspect Ratio 1:1.</div>
+    </div>
+
+    <!-- 4. RESULTADOS EXPERIMENTALES -->
+    <h2 class="section-title">4. Resultados Experimentales y Visualización</h2>
+
+    <div class="figure-box">
+      <img src="pipeline_comparativa.png" alt="Comparativa Visual de las Etapas del Pipeline">
+      <div class="figure-caption">Figura 1: Transformación secuencial de una muestra de Tizón Temprano a lo largo de las 5 etapas del pipeline.</div>
+    </div>
+
+    <h3 class="sub-title">Distribución Cuantitativa del Dataset</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Clase Patológica</th>
+          <th style="text-align: center;">Total Crudo</th>
+          <th style="text-align: center;">Train (Aumentado)</th>
+          <th style="text-align: center;">Val</th>
+          <th style="text-align: center;">Test</th>
+          <th style="text-align: center;">Total Procesado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Tizón Temprano (<i>Early Blight</i>)</strong></td>
+          <td style="text-align: center;">10</td>
+          <td style="text-align: center;">14</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;">2</td>
+          <td style="text-align: center;">17</td>
+        </tr>
+        <tr>
+          <td><strong>Follaje Sano (<i>Healthy</i>)</strong></td>
+          <td style="text-align: center;">10</td>
+          <td style="text-align: center;">14</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;">2</td>
+          <td style="text-align: center;">17</td>
+        </tr>
+        <tr>
+          <td><strong>Tizón Tardío (<i>Late Blight</i>)</strong></td>
+          <td style="text-align: center;">10</td>
+          <td style="text-align: center;">14</td>
+          <td style="text-align: center;">1</td>
+          <td style="text-align: center;">2</td>
+          <td style="text-align: center;">17</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Total Acumulado</td>
+          <td style="text-align: center;">30</td>
+          <td style="text-align: center;">42</td>
+          <td style="text-align: center;">3</td>
+          <td style="text-align: center;">6</td>
+          <td style="text-align: center;">51</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="figure-box">
+      <img src="eda_report.png" alt="Reporte de Análisis Exploratorio de Datos (EDA)">
+      <div class="figure-caption">Figura 2: Diagnóstico EDA cuantitativo: distribución por clase e histograma de varianza laplaciana.</div>
+    </div>
+
+    <!-- 5. PREGUNTAS TÍPICAS DE SUSTENTACIÓN -->
+    <h2 class="section-title">5. Guía de Sustentación Oral para los Integrantes</h2>
+
+    <div class="qa-box">
+      <div class="qa-question">¿Por qué no aplicaron una ecualización de histograma estándar global?</div>
+      <div class="qa-answer">
+        La ecualización global incrementa el contraste general de forma no lineal en toda la escena. En imágenes de campo agrícola, esto sobresatura el fondo claro y amplifica excesivamente el ruido en zonas homogéneas. Por eso utilizamos CLAHE (adaptativo y con límite de contraste) operando en bloques locales de 8×8 sobre el canal de Luminancia L* del espacio Lab.
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">¿Por qué aplicaron Data Augmentation únicamente en Train y no en Val/Test?</div>
+      <div class="qa-answer">
+        Porque los conjuntos de Validación y Prueba deben reflejar estrictamente la distribución real y no manipulada de las imágenes tomadas en campo. Aumentar Val o Test induciría fuga de datos (<i>data leakage</i>) y evaluaciones optimistas sesgadas que no se sostendrían en un despliegue productivo real.
+      </div>
+    </div>
+
+    <div class="qa-box">
+      <div class="qa-question">¿Por qué usar Letterboxing en vez de cv2.resize directo a 256x256?</div>
+      <div class="qa-answer">
+        Un reescalado directo anisotrópico comprime o estira la lámina foliar si la relación de aspecto original no es 1:1, alterando la excentricidad geométrica de las hojas y la morfología circular de las manchas necróticas. Letterbox mantiene el ratio biológico exacto rellenando con bordes simétricos.
+      </div>
+    </div>
+
+    <!-- 6. CONCLUSIONES -->
+    <h2 class="section-title">6. Conclusiones y Segunda Entrega</h2>
+    <ul>
+      <li>Se implementó con éxito una arquitectura de preprocesamiento modular, reproducible y fundamentada en principios rigurosos de visión artificial.</li>
+      <li>La preservación de bordes mediante filtro bilateral y el realce de contraste adaptativo en CIE-Lab aíslan eficazmente las lesiones foliares sin alterar la clorofila de la hoja.</li>
+      <li><strong>Próximos Pasos (Segunda Entrega):</strong> Extracción de descriptores de textura (GLCM, Haralick) y entrenamiento de modelos convolucionales de clasificación (MobileNetV3 y ResNet18) orientados a inferencia liviana en campo.</li>
+    </ul>
+
+  </div>
+
+</body>
+</html>
