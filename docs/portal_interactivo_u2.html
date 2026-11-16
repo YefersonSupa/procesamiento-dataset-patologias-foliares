@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmarking de Modelos de Deep Learning - Visión Computacional | UNSAAC</title>
+  
+  <!-- KaTeX CSS y JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" 
+          onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #0f2b5c;
+      --primary-light: #1e40af;
+      --secondary: #10b981;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --border-color: #374151;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Barra Superior de Control */
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      position: sticky;
+      top: 16px;
+      z-index: 100;
+      margin-bottom: 28px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .brand-badge {
+      background: var(--primary);
+      color: #93c5fd;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(147, 197, 253, 0.3);
+    }
+
+    .btn-pdf {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-pdf:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Portada Institucional */
+    .header-card {
+      background: linear-gradient(145deg, #111827 0%, #0f172a 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 36px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+    }
+
+    .inst-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .inst-header h3 {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+
+    .inst-header h2 {
+      font-size: 1.25rem;
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    .main-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin: 18px 0;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .metadata-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .meta-item {
+      font-size: 0.9rem;
+    }
+
+    .meta-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-value {
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-top: 2px;
+    }
+
+    /* Secciones Generales */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .section-title .icon {
+      color: var(--secondary);
+    }
+
+    /* Tablas Comparativas */
+    .table-responsive {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #1e293b;
+      color: #94a3b8;
+      font-weight: 600;
+      padding: 14px 18px;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .highlight-best {
+      color: #10b981;
+      font-weight: 700;
+    }
+
+    .tag-winner {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    /* Cajas Matemáticas */
+    .formula-box {
+      background: #1e293b;
+      border-left: 4px solid var(--secondary);
+      padding: 18px 22px;
+      border-radius: 0 12px 12px 0;
+      margin: 18px 0;
+      font-size: 1.05rem;
+      overflow-x: auto;
+    }
+
+    .formula-title {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Grilla de Métricas Rápidas */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+      margin: 20px 0;
+    }
+
+    .metric-card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      transition: transform 0.2s;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-val {
+      font-size: 1.9rem;
+      font-weight: 800;
+      margin: 8px 0 4px;
+      color: #ffffff;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: #10b981;
+    }
+
+    /* Matrices de Confusión Interactivas */
+    .cm-wrapper {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+
+    .cm-box {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .cm-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f3f4f6;
+      margin-bottom: 12px;
+    }
+
+    .cm-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(3, 1fr);
+      gap: 4px;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+
+    .cm-cell {
+      padding: 10px 4px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .cm-header-cell {
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .cm-val-high {
+      background: rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .cm-val-low {
+      background: rgba(255, 255, 255, 0.03);
+      color: #9ca3af;
+    }
+
+    .cm-val-err {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    /* Estilos Estrictos para Impresión / Descarga a PDF (A4) */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        font-size: 10pt;
+      }
+
+      .top-actions {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .header-card, .section-card, .metric-card, .cm-box, .formula-box {
+        background: #ffffff !important;
+        color: #111827 !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        margin-bottom: 16px !important;
+        padding: 16px !important;
+      }
+
+      .header-card::before {
+        display: none;
+      }
+
+      .main-title, .section-title, .inst-header h2, .inst-header h3, .meta-value {
+        color: #0f2b5c !important;
+      }
+
+      th {
+        background-color: #f3f4f6 !important;
+        color: #1f2937 !important;
+      }
+
+      td {
+        color: #111827 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+      }
+
+      .formula-box {
+        border-left: 4px solid #0f2b5c !important;
+      }
+
+      .cm-val-high {
+        background: #d1fae5 !important;
+        color: #065f46 !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Barra de Acción y Descarga PDF -->
+    <header class="top-actions">
+      <div class="brand-title">
+        <span>UNSAAC</span>
+        <span class="brand-badge">IF657BIN — Visión Computacional</span>
+      </div>
+      <button class="btn-pdf" onclick="window.print()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Imprimir / Descargar PDF Oficial (A4)
+      </button>
+    </header>
+
+    <!-- Carátula Institucional -->
+    <div class="header-card">
+      <div class="inst-header">
+        <h3>Universidad Nacional de San Antonio Abad del Cusco</h3>
+        <h2>Facultad de Ingeniería Eléctrica, Electrónica, Informática y Mecánica</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Escuela Profesional de Ingeniería Informática y de Sistemas</p>
+      </div>
+
+      <h1 class="main-title">
+        Benchmarking y Evaluación Empírica de 3 Arquitecturas Convolucionales para la Detección de Patologías Foliares en Papa (<em>Solanum tuberosum</em>)
+      </h1>
+
+      <div class="metadata-grid">
+        <div class="meta-item">
+          <div class="meta-label">Asignatura</div>
+          <div class="meta-value">Visión Computacional (IF657BIN)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Docente Responsable</div>
+          <div class="meta-value">Ing. CCACYAHUILLCA BEJAR, Hans Harley</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Estudiantes / Desarrolladores</div>
+          <div class="meta-value">SUPA CUSIPAUCAR, Yeferson (220553)<br>VILLAVICENCIO SEGUIL, Edu Piero (220555)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Entregable y Semestre</div>
+          <div class="meta-value">Segunda Entrega — Semestre 2026-II (Cusco, Perú)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen de Métricas Clave -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Dataset Extendido (PLD 256)</div>
+        <div class="metric-val">4,072</div>
+        <div class="metric-sub">3 Clases (80% Train, 10% Val, 10% Test)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Modelo Más Preciso (MobileNet-V2)</div>
+        <div class="metric-val" style="color: #10b981;">80.74%</div>
+        <div class="metric-sub">F1-Score Macro: 0.7828 | Latencia: 10.36 ms</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">ResNet-18 (Transfer Learning)</div>
+        <div class="metric-val" style="color: #38bdf8;">77.04%</div>
+        <div class="metric-sub">F1-Score Macro: 0.7596 | 11.18M Parámetros</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Baseline Convolucional (Custom CNN)</div>
+        <div class="metric-val" style="color: #f59e0b;">66.17%</div>
+        <div class="metric-sub">Entrenada 100% Desde Cero | 618K Params</div>
+      </div>
+    </div>
+
+    <!-- Sección 1: Comparativa Cuantitativa Formal -->
+    <section class="section-card">
+      <h2 class="section-title">
+        <span class="icon">📊</span> 1. Tabla Comparativa Global de los 3 Modelos Evaluados
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 16px;">
+        Evaluación empírica ejecutada de manera independiente sobre las 405 imágenes intactas del split de Testing.
+      </p>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Modelo Evaluado</th>
+              <th>Paradigma</th>
+              <th>Accuracy Global</th>
+              <th>Macro F1</th>
+              <th>Parámetros</th>
+              <th>Tamaño Disco</th>
+              <th>Latencia CPU</th>
+              <th>Veredicto Agrícola</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Custom Potato CNN</strong></td>
+              <td>From Scratch (Desde Cero)</td>
+              <td>66.17%</td>
+              <td>0.6462</td>
+              <td>618,787</td>
+              <td>2.36 MB</td>
+              <td>10.50 ms</td>
+              <td>Baseline de Control</td>
+            </tr>
+            <tr>
+              <td><strong>ResNet-18</strong></td>
+              <td>Residual Transfer Learning</td>
+              <td>77.04%</td>
+              <td>0.7596</td>
+              <td>11,178,051</td>
+              <td>42.64 MB</td>
+              <td>21.24 ms</td>
+              <td>Servidor Central / Laboratorio</td>
+            </tr>
+            <tr>
+              <td><strong>MobileNet-V2</strong> <span class="tag-winner">Ganador Global</span></td>
+              <td>Depthwise Separable Edge</td>
+              <td class="highlight-best">80.74%</td>
+              <td class="highlight-best">0.7828</td>
+              <td class="highlight-best">2,227,715</td>
+              <td class="highlight-best">8.50 MB</td>
+              <td class="highlight-best">10.36 ms</td>
+              <td>App Móvil en Campo / Dron</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Sección 2: Fundamento Matemático Riguroso -->
+    <section class="section-card">
+      <h2 class="section-title">
+        <span class="icon">📐</span> 2. Modelado Matemático y Formulación Teórica
+      </h2>
+
+      <div class="formula-box">
+        <div class="formula-title">A. Convolución Bidimensional Estándar vs. Depthwise Separable</div>
+        <p style="margin-bottom: 8px;">En la convolución estándar de una imagen con $M$ canales hacia $N$ canales de salida con kernel $D_K \times D_K$:</p>
+        $$\text{Costo}_{\text{estándar}} = D_K \cdot D_K \cdot M \cdot N \cdot D_F \cdot D_F$$
+        <p style="margin-top: 10px; margin-bottom: 8px;">MobileNet-V2 divide el proceso en dos fases: Convolución por canal (Depthwise) y Proyección lineal 1x1 (Pointwise):</p>
+        $$\text{Costo}_{\text{separable}} = D_K \cdot D_K \cdot M \cdot D_F \cdot D_F + M \cdot N \cdot D_F \cdot D_F$$
+        $$\text{Factor de Reducción} = \frac{\text{Costo}_{\text{separable}}}{\text{Costo}_{\text{estándar}}} = \frac{1}{N} + \frac{1}{D_K^2} \approx \frac{1}{3^2} = \frac{1}{9} \quad (\sim 88.8\% \text{ de ahorro en cómputo})$$
+      </div>
+
+      <div class="formula-box">
+        <div class="formula-title">B. Aprendizaje Residual (ResNet-18) y Flujo del Gradiente</div>
+        <p style="margin-bottom: 8px;">La formulación residual desacopla la identidad del residuo para evitar el desvanecimiento del gradiente en capas profundas:</p>
+        $$y = \mathcal{F}(x, \{W_i\}) + x$$
+        $$\frac{\partial \mathcal{E}}{\partial x} = \frac{\partial \mathcal{E}}{\partial y} \cdot \frac{\partial y}{\partial x} = \frac{\partial \mathcal{E}}{\partial y} \left( \frac{\partial \mathcal{F}(x, \{W_i\})}{\partial x} + \mathbf{I} \right)$$
+        <p style="margin-top: 8px; font-size: 0.9rem; color: #94a3b8;">La matriz identidad $\mathbf{I}$ garantiza que el gradiente nunca sea cero durante la retropropagación, permitiendo que la red aprenda con estabilidad absoluta.</p>
+      </div>
+
+      <div class="formula-box">
+        <div class="formula-title">C. Normalización por Lotes (Batch Normalization)</div>
+        $$\mu_B = \frac{1}{m} \sum_{i=1}^m x_i, \quad \sigma_B^2 = \frac{1}{m} \sum_{i=1}^m (x_i - \mu_B)^2$$
+        $$\hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \quad y_i = \gamma \hat{x}_i + \beta$$
+      </div>
+
+      <div class="formula-box">
+        <div class="formula-title">D. Filtrado Bilateral Espacial para Preservación de Bordes</div>
+        $$I^{\text{filtered}}(p) = \frac{1}{W_p} \sum_{q \in \Omega} I(q) \cdot \exp\left(-\frac{\|p - q\|^2}{2\sigma_s^2}\right) \cdot \exp\left(-\frac{\|I(p) - I(q)\|^2}{2\sigma_r^2}\right)$$
+        $$W_p = \sum_{q \in \Omega} \exp\left(-\frac{\|p - q\|^2}{2\sigma_s^2}\right) \cdot \exp\left(-\frac{\|I(p) - I(q)\|^2}{2\sigma_r^2}\right)$$
+      </div>
+    </section>
+
+    <!-- Sección 3: Matrices de Confusión y Análisis de Error -->
+    <section class="section-card">
+      <h2 class="section-title">
+        <span class="icon">🎯</span> 3. Matrices de Confusión en el Conjunto de Testing ($N=405$)
+      </h2>
+
+      <div class="cm-wrapper">
+        <!-- CM 1: Custom CNN -->
+        <div class="cm-box">
+          <div class="cm-title">Custom Potato CNN (66.17%)</div>
+          <div class="cm-grid">
+            <div class="cm-header-cell">Real \ Pred</div>
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-header-cell">Late Blight</div>
+
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-cell cm-val-high">117 (72.2%)</div>
+            <div class="cm-cell cm-val-low">4</div>
+            <div class="cm-cell cm-val-err">41</div>
+
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-cell cm-val-low">30</div>
+            <div class="cm-cell cm-val-high">45 (44.1%)</div>
+            <div class="cm-cell cm-val-low">27</div>
+
+            <div class="cm-header-cell">Late Blight</div>
+            <div class="cm-cell cm-val-err">29</div>
+            <div class="cm-cell cm-val-low">6</div>
+            <div class="cm-cell cm-val-high">106 (75.2%)</div>
+          </div>
+        </div>
+
+        <!-- CM 2: ResNet-18 -->
+        <div class="cm-box" style="border-color: rgba(59, 130, 246, 0.5);">
+          <div class="cm-title" style="color: #38bdf8;">ResNet-18 (77.04%)</div>
+          <div class="cm-grid">
+            <div class="cm-header-cell">Real \ Pred</div>
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-header-cell">Late Blight</div>
+
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-cell cm-val-high">130 (80.2%)</div>
+            <div class="cm-cell cm-val-low">15</div>
+            <div class="cm-cell cm-val-err">17</div>
+
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-cell cm-val-low">12</div>
+            <div class="cm-cell cm-val-high">70 (68.6%)</div>
+            <div class="cm-cell cm-val-low">20</div>
+
+            <div class="cm-header-cell">Late Blight</div>
+            <div class="cm-cell cm-val-err">8</div>
+            <div class="cm-cell cm-val-low">21</div>
+            <div class="cm-cell cm-val-high">112 (79.4%)</div>
+          </div>
+        </div>
+
+        <!-- CM 3: MobileNet-V2 -->
+        <div class="cm-box" style="border-color: rgba(16, 185, 129, 0.5);">
+          <div class="cm-title" style="color: #34d399;">MobileNet-V2 (80.74%)</div>
+          <div class="cm-grid">
+            <div class="cm-header-cell">Real \ Pred</div>
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-header-cell">Late Blight</div>
+
+            <div class="cm-header-cell">Early Blight</div>
+            <div class="cm-cell cm-val-high">157 (96.9%)</div>
+            <div class="cm-cell cm-val-low">0</div>
+            <div class="cm-cell cm-val-err">5</div>
+
+            <div class="cm-header-cell">Healthy</div>
+            <div class="cm-cell cm-val-low">30</div>
+            <div class="cm-cell cm-val-high">52 (51.0%)</div>
+            <div class="cm-cell cm-val-low">20</div>
+
+            <div class="cm-header-cell">Late Blight</div>
+            <div class="cm-cell cm-val-err">22</div>
+            <div class="cm-cell cm-val-low">1</div>
+            <div class="cm-cell cm-val-high">118 (83.7%)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección 4: Conclusiones y Veredicto Agronómico -->
+    <section class="section-card">
+      <h2 class="section-title">
+        <span class="icon">🌱</span> 4. Veredicto y Conclusiones Técnicas para la Región Cusco
+      </h2>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 12px;">
+          <h3 style="color: #34d399; font-size: 1.1rem; margin-bottom: 8px;">Ganador en Campo: MobileNet-V2</h3>
+          <p style="font-size: 0.95rem; color: #d1d5db;">
+            Con un tamaño de tan solo <strong>8.50 MB</strong>, una latencia de <strong>10.36 ms</strong> en CPU estándar y la exactitud más alta del benchmark (<strong>80.74%</strong>), MobileNet-V2 es el modelo óptimo para integrarse en aplicaciones móviles offline para smartphones de técnicos agrícolas o microcomputadores embebidos a bordo de drones en valles paperos de Cusco (Anta, Paucartambo).
+          </p>
+        </div>
+
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); padding: 20px; border-radius: 12px;">
+          <h3 style="color: #60a5fa; font-size: 1.1rem; margin-bottom: 8px;">Balance de Capacidad: ResNet-18 vs Custom CNN</h3>
+          <p style="font-size: 0.95rem; color: #d1d5db;">
+            La transferencia de aprendizaje demostró una ventaja contundente: tanto MobileNet-V2 (+14.57%) como ResNet-18 (+10.87%) superan al modelo Custom CNN entrenado desde cero (66.17%), demostrando que los filtros pre-entrenados en ImageNet aportan nociones espaciales esenciales para la detección de fitopatologías criptogámicas.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>

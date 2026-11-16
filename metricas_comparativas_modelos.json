@@ -1,0 +1,269 @@
+{
+  "fecha": "2026-11-16 16:28:27",
+  "device": "cpu",
+  "clases": [
+    "Early_Blight",
+    "Healthy",
+    "Late_Blight"
+  ],
+  "configuracion_experimento": {
+    "epochs": 3,
+    "batch_size": 32,
+    "dataset_splits": {
+      "train": 3251,
+      "val": 416,
+      "test": 405
+    }
+  },
+  "modelos": {
+    "custom_cnn": {
+      "nombre_descriptivo": "Custom Potato CNN (Desde Cero)",
+      "historial_entrenamiento": {
+        "train_loss": [
+          1.1298,
+          0.9072,
+          0.8299
+        ],
+        "train_acc": [
+          0.465,
+          0.5733,
+          0.6283
+        ],
+        "val_loss": [
+          0.944,
+          0.8229,
+          0.8575
+        ],
+        "val_acc": [
+          0.58,
+          0.6733,
+          0.58
+        ],
+        "epoch_times": [
+          26.28,
+          29.41,
+          37.28
+        ]
+      },
+      "evaluacion_testing": {
+        "accuracy_global": 0.6617,
+        "macro_avg": {
+          "precision": 0.6974,
+          "recall": 0.6384,
+          "f1_score": 0.6462
+        },
+        "weighted_avg": {
+          "precision": 0.6841,
+          "recall": 0.6617,
+          "f1_score": 0.6556
+        },
+        "metricas_por_clase": {
+          "Early_Blight": {
+            "precision": 0.6648,
+            "recall": 0.7222,
+            "f1_score": 0.6923,
+            "soporte": 162
+          },
+          "Healthy": {
+            "precision": 0.8182,
+            "recall": 0.4412,
+            "f1_score": 0.5732,
+            "soporte": 102
+          },
+          "Late_Blight": {
+            "precision": 0.6092,
+            "recall": 0.7518,
+            "f1_score": 0.673,
+            "soporte": 141
+          }
+        },
+        "matriz_confusion": [
+          [
+            117,
+            4,
+            41
+          ],
+          [
+            30,
+            45,
+            27
+          ],
+          [
+            29,
+            6,
+            106
+          ]
+        ],
+        "latencia_ms_por_imagen": 10.5,
+        "total_parametros": 618787,
+        "tamano_mb": 2.36
+      }
+    },
+    "resnet18": {
+      "nombre_descriptivo": "ResNet-18 (Transfer Learning)",
+      "historial_entrenamiento": {
+        "train_loss": [
+          1.1529,
+          0.979,
+          0.8723
+        ],
+        "train_acc": [
+          0.3517,
+          0.515,
+          0.6217
+        ],
+        "val_loss": [
+          0.9791,
+          0.8803,
+          0.7797
+        ],
+        "val_acc": [
+          0.4933,
+          0.6267,
+          0.6733
+        ],
+        "epoch_times": [
+          19.3,
+          20.01,
+          18.81
+        ]
+      },
+      "evaluacion_testing": {
+        "accuracy_global": 0.7704,
+        "macro_avg": {
+          "precision": 0.7596,
+          "recall": 0.761,
+          "f1_score": 0.7596
+        },
+        "weighted_avg": {
+          "precision": 0.7747,
+          "recall": 0.7704,
+          "f1_score": 0.7718
+        },
+        "metricas_por_clase": {
+          "Early_Blight": {
+            "precision": 0.8667,
+            "recall": 0.8025,
+            "f1_score": 0.8333,
+            "soporte": 162
+          },
+          "Healthy": {
+            "precision": 0.6604,
+            "recall": 0.6863,
+            "f1_score": 0.6731,
+            "soporte": 102
+          },
+          "Late_Blight": {
+            "precision": 0.7517,
+            "recall": 0.7943,
+            "f1_score": 0.7724,
+            "soporte": 141
+          }
+        },
+        "matriz_confusion": [
+          [
+            130,
+            15,
+            17
+          ],
+          [
+            12,
+            70,
+            20
+          ],
+          [
+            8,
+            21,
+            112
+          ]
+        ],
+        "latencia_ms_por_imagen": 21.24,
+        "total_parametros": 11178051,
+        "tamano_mb": 42.64
+      }
+    },
+    "mobilenetv2": {
+      "nombre_descriptivo": "MobileNet-V2 (Transfer Learning)",
+      "historial_entrenamiento": {
+        "train_loss": [
+          1.0297,
+          0.868,
+          0.7609
+        ],
+        "train_acc": [
+          0.4717,
+          0.6533,
+          0.7967
+        ],
+        "val_loss": [
+          0.9505,
+          0.8291,
+          0.7257
+        ],
+        "val_acc": [
+          0.5133,
+          0.62,
+          0.82
+        ],
+        "epoch_times": [
+          15.51,
+          15.36,
+          15.27
+        ]
+      },
+      "evaluacion_testing": {
+        "accuracy_global": 0.8074,
+        "macro_avg": {
+          "precision": 0.8525,
+          "recall": 0.7719,
+          "f1_score": 0.7828
+        },
+        "weighted_avg": {
+          "precision": 0.8349,
+          "recall": 0.8074,
+          "f1_score": 0.7968
+        },
+        "metricas_por_clase": {
+          "Early_Blight": {
+            "precision": 0.7512,
+            "recall": 0.9691,
+            "f1_score": 0.8464,
+            "soporte": 162
+          },
+          "Healthy": {
+            "precision": 0.9811,
+            "recall": 0.5098,
+            "f1_score": 0.671,
+            "soporte": 102
+          },
+          "Late_Blight": {
+            "precision": 0.8252,
+            "recall": 0.8369,
+            "f1_score": 0.831,
+            "soporte": 141
+          }
+        },
+        "matriz_confusion": [
+          [
+            157,
+            0,
+            5
+          ],
+          [
+            30,
+            52,
+            20
+          ],
+          [
+            22,
+            1,
+            118
+          ]
+        ],
+        "latencia_ms_por_imagen": 10.36,
+        "total_parametros": 2227715,
+        "tamano_mb": 8.5
+      }
+    }
+  }
+}

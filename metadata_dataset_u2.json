@@ -1,0 +1,51 @@
+{
+  "nombre_dataset": "Potato Leaf Disease (PLD) 3 Classes 256",
+  "resolucion_esperada": [
+    256,
+    256
+  ],
+  "clases": [
+    "Early_Blight",
+    "Healthy",
+    "Late_Blight"
+  ],
+  "distribucion_splits": {
+    "Training": {
+      "Early_Blight": 1303,
+      "Healthy": 816,
+      "Late_Blight": 1132
+    },
+    "Validation": {
+      "Early_Blight": 163,
+      "Healthy": 102,
+      "Late_Blight": 151
+    },
+    "Testing": {
+      "Early_Blight": 162,
+      "Healthy": 102,
+      "Late_Blight": 141
+    }
+  },
+  "metricas_calidad_por_clase": {
+    "Early_Blight": {
+      "varianza_laplaciano_media": 271.57,
+      "varianza_laplaciano_std": 188.82,
+      "tasa_nitidez_muestreada": 0.9333
+    },
+    "Healthy": {
+      "varianza_laplaciano_media": 252.42,
+      "varianza_laplaciano_std": 163.27,
+      "tasa_nitidez_muestreada": 0.9467
+    },
+    "Late_Blight": {
+      "varianza_laplaciano_media": 229.63,
+      "varianza_laplaciano_std": 109.22,
+      "tasa_nitidez_muestreada": 0.9467
+    }
+  },
+  "resumen_global": {
+    "total_imagenes": 4072,
+    "imagenes_validas": 450,
+    "imagenes_nitidas": 424
+  }
+}

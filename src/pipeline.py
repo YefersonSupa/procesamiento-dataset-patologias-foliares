@@ -38,7 +38,10 @@ def procesar_y_particionar_dataset(
         dir_destino = os.path.join(base_proj, 'data_processed')
     np.random.seed(semilla)
     
-    clases = [d for d in os.listdir(dir_origen) if os.path.isdir(os.path.join(dir_origen, d))]
+    clases_validas = {'Early_Blight', 'Healthy', 'Late_Blight'}
+    clases = [d for d in os.listdir(dir_origen) if os.path.isdir(os.path.join(dir_origen, d)) and (d in clases_validas or not d.startswith(('PLD_', '.', '_')))]
+    # Filtrar explícitamente contenedores de datasets
+    clases = [c for c in clases if c != 'PLD_3_Classes_256']
     clases.sort()
     
     # Limpiar o crear directorios destino

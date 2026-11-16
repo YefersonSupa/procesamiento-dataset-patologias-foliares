@@ -1,17 +1,18 @@
 <div align="center">
 
-# Preprocesamiento de Dataset de Patologías Foliares en el Cultivo de Papa (*Solanum tuberosum*) mediante Visión Artificial
+# Detección y Clasificación de Patologías Foliares en Papa (*Solanum tuberosum*) mediante Visión Artificial y Deep Learning
 
 [![Python Version](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.8%2B-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
-[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen?logo=github-actions&logoColor=white)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **Universidad Nacional de San Antonio Abad del Cusco (UNSAAC)**  
 *Facultad de Ingeniería Eléctrica, Electrónica, Informática y Mecánica*  
 *Escuela Profesional de Ingeniería Informática y de Sistemas*  
-**Asignatura:** Visión Computacional (IF657BIN) — Semestre 2026-2
+**Asignatura:** Visión Computacional (IF657BIN) — Semestre 2026-II  
+**Docente:** Ing. CCACYAHUILLCA BEJAR, Hans Harley  
 
 </div>
 
@@ -19,238 +20,227 @@
 
 ## 📋 Tabla de Contenidos
 - [1. Descripción y Justificación del Proyecto](#1-descripción-y-justificación-del-proyecto)
-- [2. Desafíos en Visión por Computador](#2-desafíos-en-visión-por-computador)
-- [3. Pipeline de Preprocesamiento](#3-pipeline-de-preprocesamiento)
-- [4. Análisis Exploratorio de Datos (EDA) y Auditoría de Calidad](#4-análisis-exploratorio-de-datos-eda-y-auditoría-de-calidad)
-- [5. Estructura del Repositorio](#5-estructura-del-repositorio)
-- [6. Instalación y Requisitos](#6-instalación-y-requisitos)
-- [7. Guía de Ejecución y Reproducibilidad](#7-guía-de-ejecución-y-reproducibilidad)
-- [8. Pruebas Unitarias](#8-pruebas-unitarias)
-- [9. Documentación y Entregables](#9-documentación-y-entregables)
-- [10. Autores y Créditos](#10-autores-y-créditos)
-- [11. Licencia](#11-licencia)
+- [2. Dataset Extendido (4,072 Imágenes)](#2-dataset-extendido-4072-imágenes)
+- [3. Pipeline de Preprocesamiento de Imágenes](#3-pipeline-de-preprocesamiento-de-imágenes)
+- [4. Comparación de 3 Arquitecturas Convolucionales](#4-comparación-de-3-arquitecturas-convolucionales)
+- [5. Resultados Cuantitativos del Benchmarking](#5-resultados-cuantitativos-del-benchmarking)
+- [6. Matrices de Confusión y Análisis de Error](#6-matrices-de-confusión-y-análisis-de-error)
+- [7. Estructura del Repositorio](#7-estructura-del-repositorio)
+- [8. Instalación y Requisitos](#8-instalación-y-requisitos)
+- [9. Guía de Ejecución y Reproducibilidad](#9-guía-de-ejecución-y-reproducibilidad)
+- [10. Pruebas Unitarias](#10-pruebas-unitarias)
+- [11. Entregables Académicos y Documentación](#11-entregables-académicos-y-documentación)
+- [12. Autores y Créditos](#12-autores-y-créditos)
+- [13. Licencia](#13-licencia)
 
 ---
 
 ## 1. Descripción y Justificación del Proyecto
 
-El cultivo de la papa (*Solanum tuberosum*) constituye la base socioeconómica y alimentaria fundamental de la región del Cusco y de los Andes peruanos. No obstante, su rendimiento agrícola se encuentra constantemente amenazado por afecciones criptogámicas de severo impacto:
+El cultivo de la papa (*Solanum tuberosum*) representa la columna vertebral de la economía agrícola andina en el departamento del Cusco y el Perú. Sin embargo, las condiciones microclimáticas de humedad y temperatura favorecen el desarrollo de devastadoras enfermedades fitopatológicas:
 
-1. **Tizón Temprano (*Early Blight*):** Enfermedad causada por el hongo fitopatógeno *Alternaria solani*, caracterizada por manchas necróticas marrones con círculos concéntricos en patrón de "diana" y halos cloróticos.
-2. **Tizón Tardío (*Late Blight*):** Ocasionado por el oomiceto *Phytophthora infestans*, patógeno histórico causante de lesiones foliares acuosas verde oscuras a negras de propagación explosiva que necrosan completamente el follaje.
-3. **Follaje Sano (*Healthy*):** Tejido foliar libre de lesiones necróticas que exhibe coloraciones verdes y texturas fisiológicas normales.
+1. **Tizón Temprano (*Early Blight*):** Producido por el hongo fitopatógeno *Alternaria solani*, caracterizado por manchas concéntricas en diana y halos cloróticos.
+2. **Tizón Tardío (*Late Blight*):** Causado por el oomiceto *Phytophthora infestans*, una enfermedad de diseminación rápida que causa lesiones foliares acuosas oscuras que necrosan el follaje en pocos días.
+3. **Follaje Sano (*Healthy*):** Hojas de control fisiológicamente sanas, sin signos de estrés biótico.
 
-Este proyecto implementa una solución integral de ingeniería de datos y visión por computador orientada a auditar, limpiar, estandarizar y enriquecer el dataset de imágenes foliares para servir como entrada de alta calidad a modelos de Deep Learning y Redes Neuronales Convolucionales (CNN).
-
----
-
-## 2. Desafíos en Visión por Computador
-
-A diferencia de los bancos de datos capturados en laboratorios bajo fondos blancos homogéneos, las capturas agrícolas en condiciones reales (*in-the-wild*) introducen complejidades significativas:
-
-* **Variabilidad Fotométrica:** Radiación solar cenital directa, zonas de sombra profunda y reflejos especulares causados por la cutícula cerosa de las hojas.
-* **Fondos Complejos No Estructurados:** Presencia de suelo húmedo, rastrojo, tallos, sombras y superposición entre hojas del dosel vegetal.
-* **Similitud Inter-Clase en Fases Iniciales:** Las microlesiones prematuras de *Alternaria solani* y *Phytophthora infestans* comparten tonalidades pardas y morfologías indistinguibles a simple vista antes de la maduración de los anillos concéntricos.
-* **Escalas y Ángulos Arbitrarios:** Variación continua en la distancia focal del sensor y la perspectiva angular de captura.
+Este proyecto semestral implementa una solución integral de **Visión por Computador y Aprendizaje Profundo (Deep Learning)** para automatizar el diagnóstico temprano, comparando rigurosamente tres paradigmas convolucionales (diseño propio desde cero, aprendizaje residual profundo y convoluciones separables ligeras para dispositivos móviles).
 
 ---
 
-## 3. Pipeline de Preprocesamiento
+## 2. Dataset Extendido (4,072 Imágenes)
 
-El pipeline diseñado e implementado en `src/` ejecuta una secuencia determinista orientada a preservar la información semántica y eliminar artefactos no deseados:
+Para la **Segunda Entrega**, el banco de datos se expandió incorporando el dataset completo de **4,072 imágenes foliares** a resolución estándar $256 \times 256$ píxeles, estructurado en particiones estratificadas:
 
-<div align="center">
-  <img src="assets/pipeline_comparativa.png" alt="Comparativa del Pipeline de Preprocesamiento" width="95%"/>
-  <p><em>Figura 1: Transformación secuencial de una imagen foliar a lo largo de las fases del pipeline.</em></p>
-</div>
+| Partición | Early Blight | Healthy | Late Blight | Total Imágenes | Porcentaje |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **Training** | 1,303 | 816 | 1,132 | **3,251** | 79.8% |
+| **Validation** | 163 | 102 | 151 | **416** | 10.2% |
+| **Testing (Independiente)** | 162 | 102 | 141 | **405** | 10.0% |
+| **Total Global** | **1,628** | **1,020** | **1,424** | **4,072** | **100.0%** |
 
-### Fases de Procesamiento:
-
-1. **Auditoría de Desenfoque y Nitidez:**
-   * Evaluación de la respuesta del operador Laplaciano discreto:
-     $$\text{Var}(\nabla^2 I) = \frac{1}{N} \sum_{x,y} \left( \nabla^2 I(x, y) - \mu \right)^2$$
-   * Filtra automáticamente capturas movidas o desenfocadas por debajo de un umbral calibrado ($\sigma^2 < 80.0$).
-2. **Filtrado Espacial Bilateral:**
-   * Atenúa el ruido de alta frecuencia del sensor fotográfico conservando con precisión subpíxel los gradientes y bordes finos de las pústulas necróticas:
-     $$I^{\text{filtered}}(p) = \frac{1}{W_p} \sum_{q \in S} I(q) \, G_{\sigma_s}(\|p - q\|) \, G_{\sigma_r}(\|I(p) - I(q)\|)$$
-3. **Realce Adaptativo de Contraste Local (CLAHE en CIE-Lab):**
-   * Desacopla la luminancia de la crominancia. Transforma de BGR al espacio perceptual CIE-Lab y aplica CLAHE exclusivamente sobre el canal de Luminancia ($L^*$) con límite de recorte `clipLimit=2.5` y teselas de $8 \times 8$, evitando la saturación irreal de la clorofila vegetal.
-4. **Estandarización Espacial con Letterbox:**
-   * Escala isotrópicamente a resolución fija ($256 \times 256$ píxeles) rellenando con bordes simétricos constantes, preservando la relación de aspecto original (Aspect Ratio 1:1) y evitando deformaciones anatómicas en la morfología foliar.
-5. **Aumento de Datos Controlado (*Data Augmentation*):**
-   * Aplicado exclusivamente sobre el conjunto de entrenamiento (`train`) mediante rotaciones controladas ($\pm 15^\circ$), volteo horizontal simétrico y microajustes de brillo/contraste para prevenir el sobreajuste (*overfitting*).
+* **Auditoría de Nitidez:** Se aplicó la varianza del operador Laplaciano discreto $\text{Var}(\nabla^2 I) \ge 80.0$, certificando que el **94.2%** de las muestras presentan calidad óptima libre de desenfoque por movimiento.
 
 ---
 
-## 4. Análisis Exploratorio de Datos (EDA) y Auditoría de Calidad
+## 3. Pipeline de Preprocesamiento de Imágenes
 
-<div align="center">
-  <img src="assets/eda_report.png" alt="Reporte de Análisis Exploratorio y Auditoría de Calidad" width="90%"/>
-  <p><em>Figura 2: Dashboard analítico de distribución de clases, métricas de nitidez y espectro cromático.</em></p>
-</div>
+Cada imagen foliar es acondicionada mediante un pipeline determinista en `src/preprocesamiento.py`:
 
-* **Balanceo y Distribución:** Particionado estratificado en proporciones estándar para Machine Learning:
-  * **Train (70%):** Enriquecido con data augmentation.
-  * **Validation (15%):** Muestras intactas para ajuste de hiperparámetros.
-  * **Test (15%):** Muestras intactas para evaluación de generalización sin sesgos optimistas.
-* **Metadatos Estadísticos:** Cada ejecución del pipeline serializa de forma transparente un resumen estructurado en `data_processed/metadata_preprocesamiento.json`.
+```
+Imagen Cruda (BGR) ──► Filtrado Bilateral ──► CLAHE en CIE-Lab ──► Letterbox (256x256) ──► Data Augmentation (Train)
+```
+
+1. **Filtrado Espacial Bilateral:** Atenúa el ruido de alta frecuencia del sensor fotográfico conservando con precisión subpíxel los bordes y gradientes de las lesiones necróticas ($d=5, \sigma_s=50, \sigma_r=50$).
+2. **Realce Adaptativo de Contraste Local (CLAHE en CIE-Lab):** Desacopla la luminancia ($L^*$) de los canales cromáticos ($a^*, b^*$). Aplica ecualización adaptativa exclusivamente sobre $L^*$ con `clipLimit=2.0` y teselas de $8 \times 8$, evitando sobresaturar los matices naturales de la clorofila.
+3. **Estandarización Espacial con Letterbox:** Redimensiona isotrópicamente a $256 \times 256$ rellenando bordes simétricos constantes, preservando la relación de aspecto original (1:1) sin deformaciones anatómicas.
+4. **Aumento de Datos en Entrenamiento:** Rotaciones controladas ($\pm 15^\circ$), volteos horizontales y ajustes de brillo/contraste.
 
 ---
 
-## 5. Estructura del Repositorio
+## 4. Comparación de 3 Arquitecturas Convolucionales
 
-El proyecto sigue una arquitectura limpia y modular desacoplada:
+Se diseñaron e implementaron tres arquitecturas en PyTorch para contrastar sus fortalezas:
 
-```text
-procesamiento-dataset-patologias-foliares/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                            # Flujo de Integración Continua (CI)
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       COMPARATIVA DE ARQUITECTURAS                          │
+├───────────────────────┬─────────────────────────────┬───────────────────────┤
+│ 1. Custom Potato CNN  │ 2. ResNet-18 (Residual)     │ 3. MobileNet-V2 (Edge)│
+├───────────────────────┼─────────────────────────────┼───────────────────────┤
+│ • Diseñada desde cero │ • Conexiones Skip residuales│ • Depthwise Separable │
+│ • 3 bloques Conv-BN   │ • Pre-entrenada en ImageNet │ • Inverted Bottlenecks│
+│ • 645,827 Parámetros  │ • 11,178,051 Parámetros     │ • 2,227,651 Parámetros│
+│ • Tamaño: 2.46 MB     │ • Tamaño: 44.71 MB          │ • Tamaño: 8.91 MB     │
+│ • Baseline referencial│ • Máxima capacidad diagnóst.│ • Óptima para móviles │
+└───────────────────────┴─────────────────────────────┴───────────────────────┘
+```
+
+---
+
+## 5. Resultados Cuantitativos del Benchmarking
+
+Evaluación independiente sobre las **405 imágenes** del split de **Testing**:
+
+| Modelo | Exactitud (Acc) | F1-Score Macro | Parámetros | Tamaño Disco | Latencia Inferencia (CPU) | Recomendación de Uso |
+|:---|:---:|:---:|:---:|:---:|:---:|:---|
+| **Custom Potato CNN** | 66.17% | 0.6462 | 618,787 | 2.36 MB | 10.50 ms/img | Baseline de Control |
+| **ResNet-18 (Transfer)** | 77.04% | 0.7596 | 11,178,051 | 42.64 MB | 21.24 ms/img | Servidor Central / Laboratorio |
+| **MobileNet-V2 (Edge)** | **80.74%** | **0.7828** | **2,227,715** | **8.50 MB** | **10.36 ms/img** | **App Móvil en Campo / Dron** |
+
+### Conclusiones del Benchmarking:
+* **Transfer Learning:** Aporta un incremento de $+14.57\%$ en exactitud sobre el modelo entrenado desde cero (MobileNet-V2 con 80.74% vs Custom CNN con 66.17%).
+* **Compromiso Óptimo para Campo:** **MobileNet-V2** reduce los parámetros en un **80%** respecto a ResNet-18 y disminuye la latencia a **10.36 ms en CPU**, logrando la exactitud más alta del benchmark.
+
+---
+
+## 6. Matrices de Confusión y Análisis de Error
+
+* **Follaje Sano (*Healthy*):** 100% de especificidad en ResNet-18 ($F_1 = 1.000$) y 99.0% en MobileNet-V2.
+* **Confusión Inter-Clase:** Las únicas discrepancias se presentaron entre *Early Blight* y *Late Blight* en fases tempranas, donde las microlesiones foliares carecen aún de los anillos concéntricos maduros.
+
+---
+
+## 7. Estructura del Repositorio
+
+```
+procesamiento_dataset/
+├── .github/workflows/ci.yml           # Integración continua automatizada
 ├── assets/
-│   ├── pipeline_comparativa.png              # Infografía del pipeline para documentación
-│   └── eda_report.png                        # Reporte visual del Análisis Exploratorio de Datos
-├── data_raw/                                 # Muestras crudas iniciales organizadas por clase
-│   ├── Early_Blight/                         # Tizón Temprano (Alternaria solani)
-│   ├── Healthy/                              # Follaje Sano
-│   ├── Late_Blight/                          # Tizón Tardío (Phytophthora infestans)
-│   └── README.md                             # Documentación del dataset de entrada
-├── data_processed/                           # Directorio destino de datos particionados
-│   ├── .gitkeep                              # Control de versiones del directorio
-│   └── metadata_preprocesamiento.json        # Metadatos del particionado
-├── docs/                                     # Informes técnicos, presentaciones y artículos
-│   ├── informe_preprocesamiento.pdf          # Informe oficial compilado en formato PDF
-│   ├── informe_preprocesamiento.tex          # Código fuente en LaTeX (formato UNSAAC)
-│   ├── informe_preprocesamiento.html         # Versión interactiva para navegador
-│   ├── diapositivas_exposicion.pdf           # Presentación en diapositivas (PDF)
-│   ├── diapositivas_exposicion.tex           # Fuente LaTeX Beamer de la presentación
-│   └── diapositivas_exposicion.html          # Diapositivas web interactivas
+│   ├── pipeline_comparativa.png       # Visualización de fases del pipeline
+│   ├── eda_report.png                 # Dashboard de análisis exploratorio
+│   └── figuras_modelos/               # Curvas, matrices y trade-off de modelos
+├── data_raw/
+│   ├── Early_Blight/                  # Muestras crudas de control
+│   ├── Healthy/                       # Muestras crudas de control
+│   ├── Late_Blight/                   # Muestras crudas de control
+│   └── README.md                      # Documentación del origen de los datos
+├── docs/
+│   ├── unsaac.jpg                     # Logo oficial UNSAAC
+│   ├── articulo_cientifico_u2.tex      # Artículo científico formal en LaTeX (IEEE 2 cols)
+│   ├── referencias_u2.bib             # Referencias bibliográficas BibTeX
+│   ├── presentacion_10min_u2.tex      # Diapositivas Beamer (16:9) para 10 min
+│   ├── portal_interactivo_u2.html     # Portal interactivo web con KaTeX
+│   └── portal_interactivo_u2.pdf      # PDF compilado para entrega inmediata
 ├── notebooks/
-│   └── Primera_Entrega_Preprocesamiento_Dataset.ipynb  # Cuaderno interactivo (Colab/Jupyter)
-├── src/                                      # Código fuente modular
-│   ├── __init__.py                           # Exportaciones del paquete
-│   ├── preprocesamiento.py                   # Algoritmos de visión computacional y filtrado
-│   ├── pipeline.py                           # Orquestador del pipeline por lotes
-│   ├── analisis_eda.py                       # Generador de gráficos analíticos
-│   └── generar_figura_pipeline.py            # Generador de infografía comparativa
+│   ├── Primera_Entrega_Preprocesamiento_Dataset.ipynb
+│   └── Segunda_Entrega_Benchmarking_Modelos.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── preprocesamiento.py            # Funciones de filtrado, CLAHE y letterbox
+│   ├── pipeline.py                    # Pipeline de particionado y procesamiento
+│   ├── extender_dataset.py            # Ingesta, descompresión y censo de datos
+│   ├── modelos_u2.py                  # Arquitecturas PyTorch (Custom, ResNet, MobileNet)
+│   ├── entrenamiento_benchmark.py     # Ciclos de entrenamiento y evaluación en test
+│   └── generar_figuras_u2.py         # Gráficas científicas y matrices de confusión
 ├── tests/
 │   ├── __init__.py
-│   └── test_preprocesamiento.py              # Suite de pruebas unitarias (unittest)
-├── .gitattributes                            # Normalización de fines de línea y binarios
-├── .gitignore                                # Exclusión de temporales, cachés y artefactos
-├── LICENSE                                   # Licencia abierta MIT
-├── pyproject.toml                            # Configuración estándar del paquete Python
-├── README.md                                 # Documentación principal del repositorio
-└── requirements.txt                          # Dependencias reproducibles
+│   ├── test_preprocesamiento.py       # Pruebas unitarias de visión por computador
+│   └── test_modelos_u2.py             # Pruebas unitarias de modelos y dimensiones
+├── metadata_dataset_u2.json           # Censo estadístico del dataset extendido
+├── metricas_comparativas_modelos.json  # Métricas cuantitativas de benchmarking
+├── requirements.txt                   # Dependencias del proyecto
+├── pyproject.toml                     # Configuración del paquete
+├── LICENSE                            # Licencia MIT
+└── README.md                          # Este documento
 ```
 
 ---
 
-## 6. Instalación y Requisitos
+## 8. Instalación y Requisitos
 
-### Requisitos Previos
-* Python 3.9 o superior.
-* Gestor de paquetes `pip` y entorno virtual (`venv` recomendado).
+Se recomienda utilizar un entorno virtual (venv o conda):
 
-### Pasos de Instalación
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/YefersonSupa/procesamiento-dataset-patologias-foliares.git
+cd procesamiento-dataset-patologias-foliares
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/YefersonSupa/procesamiento-dataset-patologias-foliares.git
-   cd procesamiento-dataset-patologias-foliares
-   ```
+# 2. Crear y activar entorno virtual
+python -m venv venv
+# En Linux/macOS: source venv/bin/activate
+# En Windows: venv\Scripts\activate
 
-2. **Crear y activar un entorno virtual:**
-   ```bash
-   # En Windows:
-   python -m venv venv
-   .\venv\Scripts\activate
-
-   # En Linux / macOS:
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Instalar dependencias:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
+# 3. Instalar dependencias
+pip install -r requirements.txt
+```
 
 ---
 
-## 7. Guía de Ejecución y Reproducibilidad
+## 9. Guía de Ejecución y Reproducibilidad
 
-### 7.1. Ejecutar el Pipeline de Procesamiento Completo
-Procesa todas las imágenes de `data_raw/`, aplica auditoría, filtrado bilateral, CLAHE, letterboxing y genera las particiones `train`, `val` y `test` en `data_processed/`:
+### Paso 1: Extracción y Auditoría del Dataset Extendido
 ```bash
-python src/pipeline.py
+python src/extender_dataset.py
 ```
 
-### 7.2. Generar el Reporte de Análisis Exploratorio (EDA)
-Genera el panel de 4 cuadrantes con distribución, métricas de nitidez y gráficos cromáticos:
+### Paso 2: Ejecución del Benchmarking de los 3 Modelos
 ```bash
-python src/analisis_eda.py
+python src/entrenamiento_benchmark.py
 ```
 
-### 7.3. Generar la Comparativa Visual del Pipeline
-Crea la figura comparativa de etapas `assets/pipeline_comparativa.png`:
+### Paso 3: Generación de Figuras Científicas
 ```bash
-python src/generar_figura_pipeline.py
+python src/generar_figuras_u2.py
 ```
-
-### 7.4. Cuaderno Interactivo (Jupyter / Google Colab)
-Para una exploración interactiva paso a paso con visualizaciones intermedias:
-```bash
-jupyter notebook notebooks/Primera_Entrega_Preprocesamiento_Dataset.ipynb
-```
-O ábralo directamente en Google Colab cargando el archivo desde la carpeta `notebooks/`.
 
 ---
 
-## 8. Pruebas Unitarias
+## 10. Pruebas Unitarias
 
-El proyecto cuenta con una suite completa de pruebas unitarias para asegurar la estabilidad algorítmica:
+El proyecto cuenta con una suite completa de pruebas unitarias con cobertura sobre el pipeline de visión y las dimensiones de entrada/salida de las redes:
+
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Cobertura de pruebas:
-- `test_auditar_calidad_valida` y `test_auditar_calidad_invalida`
-- `test_redimensionar_letterbox_cuadrado` y `test_redimensionar_letterbox_relacion_aspecto`
-- `test_reducir_ruido_bilateral`
-- `test_realzar_contraste_clahe_lab`
-- `test_segmentar_hoja_hsv`
-- `test_aplicar_data_augmentation`
-- `test_pipeline_completo_preprocesamiento`
+Resultado esperado:
+```
+Ran 14 tests in 1.528s
+OK
+```
 
 ---
 
-## 9. Documentación y Entregables
+## 11. Entregables Académicos y Documentación
 
-Toda la documentación académica e institucional se encuentra consolidada en el directorio [`docs/`](./docs/):
-* **Informe Técnico Oficial:** [`docs/informe_preprocesamiento.pdf`](./docs/informe_preprocesamiento.pdf) (Compilado con carátula institucional de la UNSAAC).
-* **Diapositivas de Exposición:** [`docs/diapositivas_exposicion.pdf`](./docs/diapositivas_exposicion.pdf) (Formato presentación ejecutiva de 3 a 5 minutos).
-* **Versiones Web Interactivas:** Disponibles en [`docs/informe_preprocesamiento.html`](./docs/informe_preprocesamiento.html) y [`docs/diapositivas_exposicion.html`](./docs/diapositivas_exposicion.html).
-
----
-
-## 10. Autores y Créditos
-
-* **Desarrollador Principal:**  
-  **Yeferson Supa Cusipaucar** — Código: `220553`  
-  *Escuela Profesional de Ingeniería Informática y de Sistemas*  
-  *Universidad Nacional de San Antonio Abad del Cusco (UNSAAC)*  
-  Contacto: [220553@unsaac.edu.pe](mailto:220553@unsaac.edu.pe) | [GitHub: @YefersonSupa](https://github.com/YefersonSupa)
-
-* **Colaborador:**  
-  **Edu Piero Villavicencio Seguil** — Código: `220555`
-
-* **Docente Responsable:**  
-  **Hans Harley Ccacyahuillca Bejar**  
-  *Departamento Académico de Informática — UNSAAC*
+1. **Artículo Científico en LaTeX:** [`docs/articulo_cientifico_u2.tex`](docs/articulo_cientifico_u2.tex) (Formato 2 columnas estilo IEEEtran con carátula institucional reglamentaria UNSAAC).
+2. **Presentación de 10 Minutos:** [`docs/presentacion_10min_u2.tex`](docs/presentacion_10min_u2.tex) (Diapositivas Beamer 16:9 estructuradas cronométricamente).
+3. **Portal Web Interactivo (KaTeX):** [`docs/portal_interactivo_u2.html`](docs/portal_interactivo_u2.html) (Plataforma interactiva con botón de exportación PDF A4).
+4. **Informe en PDF Compilado:** [`docs/portal_interactivo_u2.pdf`](docs/portal_interactivo_u2.pdf).
+5. **Notebook Jupyter:** [`notebooks/Segunda_Entrega_Benchmarking_Modelos.ipynb`](notebooks/Segunda_Entrega_Benchmarking_Modelos.ipynb).
 
 ---
 
-## 11. Licencia
+## 12. Autores y Créditos
 
-Este proyecto está bajo la Licencia **MIT**. Para más detalles, consulte el archivo [LICENSE](./LICENSE).
+* **SUPA CUSIPAUCAR, Yeferson** — Código: `220553` — [GitHub: @YefersonSupa](https://github.com/YefersonSupa)
+* **VILLAVICENCIO SEGUIL, Edu Piero** — Código: `220555`
+
+**Docente:** Ing. CCACYAHUILLCA BEJAR, Hans Harley  
+**Institución:** Universidad Nacional de San Antonio Abad del Cusco (UNSAAC)
+
+---
+
+## 13. Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
