@@ -47,9 +47,12 @@ Este proyecto semestral implementa una solución integral de **Visión por Compu
 
 ---
 
-## 2. Dataset Extendido (4,072 Imágenes)
+## 2. Dataset Extendido (4,072 Imágenes) y Fuente Oficial
 
-Para la **Segunda Entrega**, el banco de datos se expandió incorporando el dataset completo de **4,072 imágenes foliares** a resolución estándar $256 \times 256$ píxeles, estructurado en particiones estratificadas:
+* **Fuente de Datos en Kaggle:** [Potato Disease Leaf Dataset (PLD)](https://www.kaggle.com/datasets/rizwan123456789/potato-disease-leaf-datasetpld?resource=download) por **Md. Rizwan (`@rizwan123456789`)**.
+* **Resolución Nativa:** $256 \times 256$ píxeles, formato RGB estándar.
+
+Para la **Segunda Entrega**, el banco de datos se expandió incorporando el dataset completo de **4,072 imágenes foliares** estructurado en las particiones oficiales:
 
 | Partición | Early Blight | Healthy | Late Blight | Total Imágenes | Porcentaje |
 |:---|:---:|:---:|:---:|:---:|:---:|

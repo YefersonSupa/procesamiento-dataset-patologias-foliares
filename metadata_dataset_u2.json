@@ -1,5 +1,10 @@
 {
   "nombre_dataset": "Potato Leaf Disease (PLD) 3 Classes 256",
+  "fuente_oficial": {
+    "plataforma": "Kaggle",
+    "autor": "Md. Rizwan (rizwan123456789)",
+    "url": "https://www.kaggle.com/datasets/rizwan123456789/potato-disease-leaf-datasetpld?resource=download"
+  },
   "resolucion_esperada": [
     256,
     256

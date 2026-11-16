@@ -2,6 +2,14 @@
 
 Este directorio contiene las muestras de imágenes foliares crudas organizadas por clases patológicas para el cultivo de papa (*Solanum tuberosum*).
 
+## Fuente Oficial del Dataset (Kaggle)
+
+* **Repositorio en Kaggle:** [Potato Disease Leaf Dataset (PLD)](https://www.kaggle.com/datasets/rizwan123456789/potato-disease-leaf-datasetpld?resource=download)
+* **Autor / Creador:** Md. Rizwan (`@rizwan123456789`)
+* **Resolución Nativa:** $256 \times 256$ píxeles (formato RGB / JPG).
+* **Volumen Total:** 4,072 imágenes foliares distribuidas en 3 clases patológicas.
+* **Estructura Oficial:** Partición estándar en subdirectorios `Training` (3,251 imgs), `Validation` (416 imgs) y `Testing` (405 imgs).
+
 ## Clases Representadas
 
 | Clase | Patógeno Causante | Descripción Visual |
@@ -13,10 +21,8 @@ Este directorio contiene las muestras de imágenes foliares crudas organizadas p
 ## Muestras Incluidas y Dataset Completo
 
 - El repositorio incluye un conjunto de muestras ligeras para permitir la ejecución inmediata del pipeline y pruebas locales sin descargas adicionales.
-- Para entrenar modelos a gran escala con el dataset completo (ej. PlantVillage Potato Dataset), descargue las imágenes completas desde Kaggle o Zenodo y distribúyalas dentro de sus respectivas subcarpetas:
-  ```text
-  data_raw/
-  ├── Early_Blight/
-  ├── Healthy/
-  └── Late_Blight/
+- Para reproducir el entrenamiento a gran escala con las 4,072 imágenes, descargue el archivo comprimido desde el enlace de Kaggle o utilice el módulo:
+  ```bash
+  python src/extender_dataset.py
   ```
+  lo cual descomprime e integra `archive.zip` (`PLD_3_Classes_256`) en la estructura del proyecto.

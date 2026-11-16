@@ -176,8 +176,8 @@ lo que reduce el cómputo en un factor aproximado de $\frac{1}{N} + \frac{1}{D_K
 
 \section{Configuración Experimental}
 
-\subsection{Dataset Extendido}
-El dataset PLD 3 Classes 256 está conformado por 4,072 imágenes distribuidas en:
+\subsection{Dataset Extendido y Fuente de Datos}
+El dataset empleado corresponde al banco de datos abierto \textit{Potato Disease Leaf Dataset (PLD)} curado por Md. Rizwan en Kaggle \cite{rizwan2023potato}, conformado por un total de 4,072 capturas foliares de alta calidad a resolución nativa de $256 \times 256$ píxeles, estructurado formalmente en:
 \begin{itemize}
     \item \textbf{Training (80\% - 3,251 imgs):} 1,303 Early Blight, 816 Healthy, 1,132 Late Blight. Sometido a data augmentation en tiempo de entrenamiento (rotación $\pm 15^\circ$, volteos horizontal y vertical aleatorios, fluctuación de brillo y contraste).
     \item \textbf{Validation (10\% - 416 imgs):} 163 Early Blight, 102 Healthy, 151 Late Blight.
